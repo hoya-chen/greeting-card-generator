@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>年節賀卡坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600&display=swap">
+<style>
+/* Layout: controls column on the left, the card (one canvas, also the download) on the right; stacks card-first on phones. */
+:root{
+  --bg:#f5efee; --fg:#2b1a1b; --muted:#7a5f60; --line:#e2d3d2; --panel:#fffaf9;
+  --chip:#efe2e1; --chip-on:#a8231f; --chip-on-fg:#fff6e6; --focus:#c8902c;
+  --display:"LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif;
+  --body:"Noto Serif TC","PMingLiU","Songti TC",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
+  --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
+  --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:32px;align-items:start}
+header.top{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header.top h1{font-family:var(--display);font-weight:700;font-size:40px;margin:0;line-height:1.1}
+header.top p{margin:0;color:var(--muted)}
+#yearSel{max-width:260px}
+.controls{display:grid;gap:22px;min-width:0}
+.group{display:grid;gap:10px}
+.label{font-size:13px;letter-spacing:.12em;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--chip);color:var(--fg);font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:baseline}
+.chip small{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
+.chip[aria-pressed="true"] small{color:var(--chip-on-fg);opacity:.8}
+.chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.field{display:grid;gap:6px}
+.field input,.field select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:inherit;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.motif{font-size:13px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
+.stage{min-width:0;display:grid;gap:14px;justify-items:center}
+#card{width:100%;max-width:520px;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 18px 40px -18px rgba(60,10,10,.55);display:block}
+@media (prefers-reduced-motion:no-preference){
+  #card.flip{animation:pop .45s ease-out}
+  @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
+}
+@media (max-width:760px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  .stage{order:-1}
+  header.top{order:-2}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1>年節賀卡坊</h1>
+    <p>給家中長輩的傳統喜氣賀卡，每個節日都有專屬樣板。</p>
+  </header>
+
+  <section class="controls" aria-label="賀卡設定">
+    <div class="group">
+      <span class="label">年份與節日</span>
+      <div class="field"><label for="yearSel" class="hint">西元年</label><select id="yearSel"></select></div>
+      <div class="chips" id="festChips" role="group" aria-label="節日"></div>
+      <span class="hint" id="nextNote"></span>
+      <p class="hint" id="dateNote"></p>
+      <p class="motif" id="motifNote"></p>
+    </div>
+
+    <div class="group">
+      <span class="label">稱呼與署名</span>
+      <div class="field">
+        <label for="toSel" class="hint">送給</label>
+        <select id="toSel">
+          <option>爸爸媽媽</option>
+          <option>爺爺奶奶</option>
+          <option>外公外婆</option>
+          <option>岳父岳母</option>
+          <option>公公婆婆</option>
+          <option>各位長輩</option>
+          <option value="__custom">自己輸入…</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="toCustom" class="hint">自訂稱呼</label><input id="toCustom" placeholder="例如：舅舅舅媽" disabled></div>
+        <div class="field"><label for="fromIn" class="hint">署名（可留空）</label><input id="fromIn" value="Ted" placeholder="例如：小明敬上"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="label">祝賀文字</span>
+      <div class="actions">
+        <button class="btn" id="swapArt" type="button">換一張</button>
+        <button class="btn" id="shuffle" type="button">換一句</button>
+        <button class="btn" id="copy" type="button">複製祝賀文字</button>
+        <button class="btn primary" id="dl" type="button">下載賀卡圖片</button>
+      </div>
+      <p class="hint" id="copyNote">每個節日有兩張圖、三種祝賀詞可換。下載的 PNG 和右邊預覽一模一樣。</p>
+    </div>
+  </section>
+
+  <section class="stage" aria-label="賀卡預覽">
+    <canvas id="card" width="1000" height="1400" role="img" aria-label="賀卡預覽"></canvas>
+  </section>
+</div>
+
+<script>
+const INK = "#fff3dc";
+const FESTS = [
+  {id:"chongyang", name:"重陽節", phrase:"福壽安康", tpl:"chongyang", motif2:"登高涼亭、層層山巒、南飛的雁群，山腳開滿菊花。",
+   paper:"#a8321c", paper2:"#6e1c0e", gold:"#f0c36b",
+   motif:"登高遠眺的山巒、盛開的菊花與一串茱萸，花心寫上「壽」字。",
+   msgs:[
+    "九九重陽，敬祝您身體硬朗、福壽綿長。謝謝您一路的照顧，有空我們一起去走走、登登高。",
+    "重陽佳節，秋高氣爽。願您日日開懷，步步穩健，天天都有好心情。",
+    "又到敬老的日子，想對您說聲謝謝。祝您健康長壽，笑口常開，我們常回家看您。"]},
+  {id:"dongzhi", name:"冬至", phrase:"團圓添歲", tpl:"dongzhi", motif2:"圓形花窗裡一枝紅白梅花，窗內飄著細雪。",
+   paper:"#9e1d23", paper2:"#64101a", gold:"#efd08a",
+   motif:"一碗冒著熱氣的紅白湯圓，四周飄著雪花。",
+   msgs:[
+    "冬至吃湯圓，又長一歲福氣添。天冷記得多穿衣，祝您身體暖、心裡甜。",
+    "冬至到，祝您團團圓圓、甜甜蜜蜜，一家人圍爐吃湯圓，平安又溫暖。",
+    "冬至大如年，願您冬藏好福氣，來年身體更健康，日子更順心。"]},
+  {id:"xmas", name:"聖誕節", phrase:"平安喜樂", tpl:"xmas", motif2:"綴著紅果的聖誕花圈，下方繫紅色蝴蝶結，中間是「安」字。",
+   paper:"#1f5b3a", paper2:"#0f3523", gold:"#e8c46e",
+   motif:"掛滿紅色吊飾的聖誕樹，頂端一顆金星，雪花紛飛。",
+   msgs:[
+    "聖誕快樂！願這個冬天溫暖平安，您的身體健康，家裡處處是笑聲。",
+    "在這個團聚的節日，謝謝您一直以來的愛。祝您平安喜樂，佳節愉快。",
+    "聖誕夜祝福送給您：身體健康、心情舒暢，新的一年也萬事如意。"]},
+  {id:"newyear", name:"元旦", phrase:"新年新禧", tpl:"newyear", motif2:"旭日從海面東昇，金色的新年年份高掛天空。",
+   paper:"#b0241e", paper2:"#6f120e", gold:"#ecc66e",
+   motif:"跨年煙火在夜空綻放，正中央是金色的新年年份。",
+   msgs:[
+    "新年快樂！願您在新的一年裡身體健康、平安順遂，天天都有好心情。",
+    "元旦迎新，謝謝您過去一年的照顧。祝您新年新氣象，福氣滿滿。",
+    "一元復始，萬象更新。祝您身強體健，日子過得舒心自在。"]},
+  {id:"spring", name:"春節", phrase:"{P}", tpl:"spring", motif2:"當年生肖寫在金色圓章裡，一串鞭炮和紅白梅花迎春。",
+   paper:"#c0241c", paper2:"#7e100b", gold:"#f2c75c",
+   motif:"左右一副春聯，中間是斗方「福」字，上方掛兩盞紅燈籠。",
+   couplet:["天增歲月人增壽","春滿乾坤福滿門"],
+   msgs:[
+    "{Z}年行大運！敬祝您新春快樂、身體健康，福如東海，壽比南山。",
+    "{P}，萬事吉祥。謝謝您一年來的辛勞與疼愛，祝您新的一年平安喜樂、笑口常開。",
+    "新春佳節，給您拜年了！願您{Z}年身體硬朗、萬事如意，闔家團圓福滿堂。"]},
+  {id:"yuanxiao", name:"元宵節", phrase:"花好月圓", tpl:"yuanxiao", motif2:"一盞寫著「圓」字的大花燈，四周煙火綻放。",
+   paper:"#7a1630", paper2:"#3e0a1a", gold:"#f3cf6a",
+   motif:"夜空下一排花燈高掛，燈上寫著「元宵樂」，一輪明月相伴。",
+   msgs:[
+    "元宵節快樂！月圓人團圓，祝您身體健康，日子像湯圓一樣圓圓滿滿。",
+    "正月十五鬧元宵，燈火通明福氣到。祝您平安順心，笑容常在。",
+    "花燈亮，月兒圓，祝您元宵佳節團團圓圓、甜甜美美，新的一年事事如意。"]},
+  {id:"mother", name:"母親節", phrase:"慈恩永念", tpl:"mother", motif2:"一顆寫著「愛」字的大愛心，外圈繞著小花。",
+   paper:"#b23a48", paper2:"#6e1a28", gold:"#f2cf8c",
+   motif:"三朵紅粉康乃馨紮成花束，繫上金色緞帶。",
+   msgs:[
+    "母親節快樂！謝謝您無微不至的照顧，願您永遠健康美麗、天天開心。",
+    "千言萬語說不完您的好。祝您母親節快樂，身體健康，日日舒心。",
+    "您的愛是家裡最溫暖的地方。今天想好好對您說：謝謝您，我愛您。"]},
+  {id:"duanwu", name:"端午節", phrase:"端陽安康", tpl:"duanwu", motif2:"一個繡著「安」字的端午香包，兩旁插著艾草與菖蒲。",
+   paper:"#1d5a4c", paper2:"#0c332a", gold:"#e7c56f",
+   motif:"綁著金繩的大粽子，下方龍舟在浪花中前進。",
+   msgs:[
+    "端午安康！吃粽子、掛艾草，祝您身體健康，平平安安過夏天。",
+    "五月五，過端午。願您粽享健康、粽享福氣，家裡和樂又順心。",
+    "端午佳節，記得天熱多喝水、多休息。祝您安康吉祥，事事順利。"]},
+  {id:"father", name:"父親節", phrase:"父愛如山", tpl:"father", motif2:"一壺熱茶配茶杯，壺上寫著「德」字，上方伸出松枝。",
+   paper:"#8f2a1e", paper2:"#4f150c", gold:"#e9c27a",
+   motif:"旭日從層層山巒後升起，一旁挺立著青松。",
+   msgs:[
+    "父親節快樂！謝謝您一直是家裡最可靠的依靠，祝您身體健康、萬事順心。",
+    "您的付出我們都記在心裡。祝您父親節快樂，少操點心，多享點福。",
+    "爸爸節快樂！願您身體硬朗、笑口常開，有空我們陪您喝茶聊天。"]},
+  {id:"midautumn", name:"中秋節", phrase:"月圓人圓", tpl:"midautumn", motif2:"一個大月餅印著「團圓」，旁邊有小月亮與桂花。",
+   paper:"#1f2d5c", paper2:"#0f1734", gold:"#f0cf7c",
+   motif:"一輪金色滿月，玉兔坐在月中，祥雲與桂花環繞。",
+   msgs:[
+    "中秋快樂！月圓人團圓，祝您身體健康，闔家平安，幸福美滿。",
+    "但願人長久，千里共嬋娟。中秋佳節，祝您心想事成，天天開懷。",
+    "又到中秋賞月時，祝您花好月圓、事事圓滿，柚子月餅都甜在心。"]},
+];
+
+const $ = id => document.getElementById(id);
+const W = 1000, H = 1400;
+const DISP = '"LXGW WenKai TC","Kaiti TC","KaiTi",serif';
+const BODY = '"Noto Serif TC","PMingLiU",serif';
+let cur = null, msgIdx = 0, tplIdx = 0;
+
+const CN="〇一二三四五六七八九";
+function cnNum(n){if(n<=10)return n===10?"十":CN[n];const t=Math.floor(n/10),u=n%10;return (t>1?CN[t]:"")+"十"+(u?CN[u]:"")}
+function fmtDate(iso){const [y,m,d]=iso.split("-").map(Number);return `${String(y).split("").map(c=>CN[c]).join("")}年${cnNum(m)}月${cnNum(d)}日`}
+// [國曆日期, 農曆日期] per year and festival. Lunar festivals are checked against published tables
+// (春節 2027-02-06 and 2030-02-03 follow the official calendars); other lunar dates come from the Chinese calendar.
+const TABLE = {"2026":{"chongyang":["2026-10-18","九月初九"],"spring":["2026-02-17","正月初一"],"yuanxiao":["2026-03-03","正月十五"],"duanwu":["2026-06-19","五月初五"],"midautumn":["2026-09-25","八月十五"],"dongzhi":["2026-12-22","冬月十四"],"xmas":["2026-12-25","冬月十七"],"newyear":["2026-01-01","冬月十三"],"mother":["2026-05-10","三月廿四"],"father":["2026-08-08","六月廿六"]},"2027":{"chongyang":["2027-10-08","九月初九"],"spring":["2027-02-06","正月初一"],"yuanxiao":["2027-02-20","正月十五"],"duanwu":["2027-06-09","五月初五"],"midautumn":["2027-09-15","八月十五"],"dongzhi":["2027-12-22","冬月廿五"],"xmas":["2027-12-25","冬月廿八"],"newyear":["2027-01-01","冬月廿四"],"mother":["2027-05-09","四月初四"],"father":["2027-08-08","七月初七"]},"2028":{"chongyang":["2028-10-26","九月初九"],"spring":["2028-01-26","正月初一"],"yuanxiao":["2028-02-09","正月十五"],"duanwu":["2028-05-28","五月初五"],"midautumn":["2028-10-03","八月十五"],"dongzhi":["2028-12-21","冬月初六"],"xmas":["2028-12-25","冬月初十"],"newyear":["2028-01-01","臘月初五"],"mother":["2028-05-14","四月二十"],"father":["2028-08-08","六月十八"]},"2029":{"chongyang":["2029-10-16","九月初九"],"spring":["2029-02-13","正月初一"],"yuanxiao":["2029-02-27","正月十五"],"duanwu":["2029-06-16","五月初五"],"midautumn":["2029-09-22","八月十五"],"dongzhi":["2029-12-21","冬月十七"],"xmas":["2029-12-25","冬月廿一"],"newyear":["2029-01-01","冬月十七"],"mother":["2029-05-13","四月初一"],"father":["2029-08-08","六月廿九"]},"2030":{"chongyang":["2030-10-05","九月初九"],"spring":["2030-02-03","正月初一"],"yuanxiao":["2030-02-17","正月十五"],"duanwu":["2030-06-05","五月初五"],"midautumn":["2030-09-12","八月十五"],"dongzhi":["2030-12-22","冬月廿八"],"xmas":["2030-12-25","臘月初一"],"newyear":["2030-01-01","冬月廿八"],"mother":["2030-05-12","四月十一"],"father":["2030-08-08","七月初十"]},"2031":{"chongyang":["2031-10-24","九月初九"],"spring":["2031-01-23","正月初一"],"yuanxiao":["2031-02-06","正月十五"],"duanwu":["2031-06-24","五月初五"],"midautumn":["2031-10-01","八月十五"],"dongzhi":["2031-12-22","冬月初九"],"xmas":["2031-12-25","冬月十二"],"newyear":["2031-01-01","臘月初八"],"mother":["2031-05-11","閏三月二十"],"father":["2031-08-08","六月廿一"]},"2032":{"chongyang":["2032-10-12","九月初九"],"spring":["2032-02-11","正月初一"],"yuanxiao":["2032-02-25","正月十五"],"duanwu":["2032-06-12","五月初五"],"midautumn":["2032-09-19","八月十五"],"dongzhi":["2032-12-21","冬月十九"],"xmas":["2032-12-25","冬月廿三"],"newyear":["2032-01-01","冬月十九"],"mother":["2032-05-09","四月初一"],"father":["2032-08-08","七月初三"]},"2033":{"chongyang":["2033-10-01","九月初九"],"spring":["2033-01-31","正月初一"],"yuanxiao":["2033-02-14","正月十五"],"duanwu":["2033-06-01","五月初五"],"midautumn":["2033-09-08","八月十五"],"dongzhi":["2033-12-21","冬月三十"],"xmas":["2033-12-25","閏冬月初四"],"newyear":["2033-01-01","臘月初一"],"mother":["2033-05-08","四月初十"],"father":["2033-08-08","七月十四"]},"2034":{"chongyang":["2034-10-20","九月初九"],"spring":["2034-02-19","正月初一"],"yuanxiao":["2034-03-05","正月十五"],"duanwu":["2034-06-20","五月初五"],"midautumn":["2034-09-27","八月十五"],"dongzhi":["2034-12-22","冬月十二"],"xmas":["2034-12-25","冬月十五"],"newyear":["2034-01-01","閏冬月十一"],"mother":["2034-05-14","三月廿六"],"father":["2034-08-08","六月廿四"]},"2035":{"chongyang":["2035-10-09","九月初九"],"spring":["2035-02-08","正月初一"],"yuanxiao":["2035-02-22","正月十五"],"duanwu":["2035-06-10","五月初五"],"midautumn":["2035-09-16","八月十五"],"dongzhi":["2035-12-22","冬月廿三"],"xmas":["2035-12-25","冬月廿六"],"newyear":["2035-01-01","冬月廿二"],"mother":["2035-05-13","四月初六"],"father":["2035-08-08","七月初五"]},"2036":{"chongyang":["2036-10-27","九月初九"],"spring":["2036-01-28","正月初一"],"yuanxiao":["2036-02-11","正月十五"],"duanwu":["2036-05-30","五月初五"],"midautumn":["2036-10-04","八月十五"],"dongzhi":["2036-12-21","冬月初五"],"xmas":["2036-12-25","冬月初九"],"newyear":["2036-01-01","臘月初四"],"mother":["2036-05-11","四月十六"],"father":["2036-08-08","閏六月十七"]}};
+const YEARS = Object.keys(TABLE).map(Number);
+let year = YEARS[0];
+const STEM="甲乙丙丁戊己庚辛壬癸", BRANCH="子丑寅卯辰巳午未申酉戌亥", ZOD="鼠牛虎兔龍蛇馬羊猴雞狗豬";
+const ZPHRASE={子:"金鼠迎春",丑:"牛轉乾坤",寅:"虎虎生風",卯:"玉兔呈祥",辰:"龍騰盛世",巳:"金蛇獻瑞",午:"馬到成功",未:"三羊開泰",申:"金猴獻瑞",酉:"金雞報曉",戌:"旺年納福",亥:"金豬納福"};
+// 元旦 (Jan 1) is always before 春節, so it still belongs to the previous lunar year
+function lunarYear(f){return f.id==="newyear"?year-1:year}
+function ganzhi(L){return STEM[(L-4)%10]+BRANCH[(L-4)%12]}
+function occ(f){const [date,lunar]=TABLE[year][f.id];const L=lunarYear(f),gz=ganzhi(L);return {date,lunar,gz,zodiac:ZOD[(L-4)%12],zphrase:ZPHRASE[gz[1]]}}
+function phraseOf(f){return fill(f.phrase,occ(f))}
+function msgOf(f){return fill(f.msgs[msgIdx%f.msgs.length],occ(f))}
+function fill(str,o){return str.replace(/\{Z\}/g,o.zodiac).replace(/\{P\}/g,o.zphrase)}
+function dayDiff(iso){const t=new Date();t.setHours(0,0,0,0);return Math.round((new Date(iso+"T00:00:00")-t)/86400000)}
+
+/* ---------- drawing helpers ---------- */
+function rand(seed){let s=seed;return()=>{s=(s*9301+49297)%233280;return s/233280}}
+function circle(x,cx,cy,r){x.beginPath();x.arc(cx,cy,r,0,Math.PI*2)}
+function vText(x,str,cx,top,size,gap){x.textAlign="center";x.textBaseline="top";let y=top;for(const ch of str){x.fillText(ch,cx,y);y+=size+gap}}
+function snow(x,f,seed,n,area){
+  const r=rand(seed);x.save();x.strokeStyle=f.gold;x.lineWidth=2;
+  for(let i=0;i<n;i++){const cx=area[0]+r()*(area[2]-area[0]),cy=area[1]+r()*(area[3]-area[1]),s=8+r()*14;x.globalAlpha=.35+r()*.4;
+    x.beginPath();for(let k=0;k<6;k++){const a=k*Math.PI/3;x.moveTo(cx,cy);x.lineTo(cx+Math.cos(a)*s,cy+Math.sin(a)*s)}x.stroke()}
+  x.restore();
+}
+function stars(x,f,seed,n,area){
+  const r=rand(seed);x.save();x.fillStyle=f.gold;
+  for(let i=0;i<n;i++){x.globalAlpha=.3+r()*.6;circle(x,area[0]+r()*(area[2]-area[0]),area[1]+r()*(area[3]-area[1]),1+r()*2.6);x.fill()}
+  x.restore();
+}
+function cloud(x,f,cx,cy,s,fill){
+  // 祥雲: a row of curls
+  x.save();x.translate(cx,cy);x.scale(s,s);x.lineWidth=4/s;x.strokeStyle=f.gold;x.fillStyle=fill;
+  x.beginPath();x.moveTo(-120,20);x.bezierCurveTo(-130,-20,-80,-40,-60,-15);x.bezierCurveTo(-55,-55,10,-60,15,-20);
+  x.bezierCurveTo(30,-50,90,-40,85,-5);x.bezierCurveTo(120,-10,130,20,110,20);x.closePath();x.fill();x.stroke();
+  x.beginPath();x.arc(-60,-2,14,Math.PI,Math.PI*2.4);x.stroke();x.beginPath();x.arc(15,-8,16,Math.PI,Math.PI*2.4);x.stroke();
+  x.restore();
+}
+function lantern(x,f,cx,top,cy,s,ch){
+  x.save();x.strokeStyle=f.gold;x.lineWidth=2;x.beginPath();x.moveTo(cx,top);x.lineTo(cx,cy-s*0.62);x.stroke();
+  x.fillStyle=f.gold;x.fillRect(cx-s*0.26,cy-s*0.66,s*0.52,s*0.1);x.fillRect(cx-s*0.26,cy+s*0.56,s*0.52,s*0.1);
+  const g=x.createRadialGradient(cx-s*.15,cy-s*.15,s*.05,cx,cy,s*.7);g.addColorStop(0,"#ff5a3c");g.addColorStop(1,"#c0140f");
+  x.fillStyle=g;x.beginPath();x.ellipse(cx,cy,s*0.5,s*0.6,0,0,Math.PI*2);x.fill();
+  x.strokeStyle=f.gold;x.lineWidth=1.6;x.globalAlpha=.7;
+  for(const k of [-.3,0,.3]){x.beginPath();x.ellipse(cx,cy,s*0.5*Math.abs(k)*2||1,s*0.6,0,0,Math.PI*2);x.stroke()}
+  x.globalAlpha=1;
+  if(ch){x.fillStyle=f.gold;x.font=`700 ${Math.round(s*0.5)}px ${DISP}`;x.textAlign="center";x.textBaseline="middle";x.fillText(ch,cx,cy+s*.03)}
+  x.strokeStyle=f.gold;x.lineWidth=2;for(let i=-3;i<=3;i++){x.beginPath();x.moveTo(cx+i*s*0.03,cy+s*0.66);x.lineTo(cx+i*s*0.045,cy+s*1.0);x.stroke()}
+  x.restore();
+}
+function burst(x,f,cx,cy,r,n,color){
+  x.save();x.strokeStyle=color;x.fillStyle=color;x.lineWidth=3;x.lineCap="round";
+  for(let i=0;i<n;i++){const a=i*2*Math.PI/n;x.beginPath();x.moveTo(cx+Math.cos(a)*r*.3,cy+Math.sin(a)*r*.3);x.lineTo(cx+Math.cos(a)*r*.85,cy+Math.sin(a)*r*.85);x.stroke();
+    circle(x,cx+Math.cos(a)*r,cy+Math.sin(a)*r,4);x.fill()}
+  x.restore();
+}
+function mountains(x,f,base,layers){
+  layers.forEach((L,i)=>{x.fillStyle=L.c;x.beginPath();x.moveTo(60,base);
+    L.p.forEach(([px,py],j)=>{const prev=j?L.p[j-1]:[60,base];x.quadraticCurveTo((prev[0]+px)/2,Math.min(prev[1],py)-L.k,px,py)});
+    x.lineTo(940,base);x.closePath();x.fill();
+    x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=2;x.stroke();x.globalAlpha=1});
+}
+function pine(x,f,cx,base,s){
+  x.save();x.fillStyle=f.paper2;x.strokeStyle=f.gold;x.lineWidth=2.5;
+  x.fillRect(cx-s*.06,base-s*.5,s*.12,s*.5);x.strokeRect(cx-s*.06,base-s*.5,s*.12,s*.5);
+  [[.95,.55],[.75,.45],[.55,.36]].forEach(([y,w],i)=>{const ty=base-s*y-s*.45;x.beginPath();x.moveTo(cx,ty);x.lineTo(cx-s*w,base-s*y+s*.05);x.lineTo(cx+s*w,base-s*y+s*.05);x.closePath();x.fill();x.stroke()});
+  x.restore();
+}
+
+/* ---------- templates: each draws into the art zone (y 190–950) and returns where the phrase sits ---------- */
+const TPL = {
+  spring(x,f){
+    // 春聯 strips
+    const strip=(sx,text)=>{x.fillStyle=f.paper2;x.fillRect(sx,215,84,690);x.strokeStyle=f.gold;x.lineWidth=3;x.strokeRect(sx+6,221,72,678);
+      x.fillStyle=f.gold;x.font=`700 72px ${DISP}`;vText(x,text,sx+42,240,72,22)};
+    strip(830,f.couplet[0]); strip(86,f.couplet[1]);
+    lantern(x,f,330,190,330,120,"春");lantern(x,f,670,190,330,120,"喜");
+    // 斗方
+    x.save();x.translate(500,590);x.rotate(Math.PI/4);x.fillStyle=f.gold;x.fillRect(-150,-150,300,300);
+    x.strokeStyle=f.paper2;x.lineWidth=4;x.strokeRect(-138,-138,276,276);x.restore();
+    x.fillStyle=f.paper2;x.font=`700 230px ${DISP}`;x.textAlign="center";x.textBaseline="middle";x.fillText("福",500,600);
+    return 880;
+  },
+  yuanxiao(x,f){
+    stars(x,f,7,70,[70,190,930,940]);
+    x.fillStyle=f.gold;x.globalAlpha=.9;circle(x,800,280,70);x.fill();x.globalAlpha=1;
+    x.strokeStyle=f.gold;x.lineWidth=3;x.beginPath();x.moveTo(90,215);x.quadraticCurveTo(500,290,910,215);x.stroke();
+    lantern(x,f,250,240,450,150,"元");lantern(x,f,500,255,540,200,"宵");lantern(x,f,750,240,450,150,"樂");
+    return 870;
+  },
+  duanwu(x,f){
+    // leaves
+    x.save();x.fillStyle="#2f7a52";x.strokeStyle=f.gold;x.lineWidth=2;
+    [[-0.5,250],[0.45,760]].forEach(([a,px])=>{x.save();x.translate(px,330);x.rotate(a);x.beginPath();x.ellipse(0,0,40,150,0,0,Math.PI*2);x.fill();x.stroke();x.beginPath();x.moveTo(0,-140);x.lineTo(0,140);x.stroke();x.restore()});
+    x.restore();
+    // 粽子
+    x.save();const g=x.createLinearGradient(0,250,0,580);g.addColorStop(0,"#5aa572");g.addColorStop(1,"#2e6e48");x.fillStyle=g;
+    x.beginPath();x.moveTo(500,240);x.quadraticCurveTo(520,250,680,560);x.quadraticCurveTo(500,600,320,560);x.quadraticCurveTo(480,250,500,240);x.closePath();x.fill();
+    x.strokeStyle=f.gold;x.lineWidth=3;x.stroke();
+    x.globalAlpha=.5;x.lineWidth=2;for(const dx of [-60,0,60]){x.beginPath();x.moveTo(500,250);x.quadraticCurveTo(500+dx*.6,420,500+dx*1.7,570);x.stroke()}
+    x.globalAlpha=1;x.lineWidth=7;x.beginPath();x.moveTo(390,430);x.quadraticCurveTo(500,450,610,430);x.stroke();
+    x.beginPath();x.moveTo(500,445);x.quadraticCurveTo(470,500,440,520);x.moveTo(500,445);x.quadraticCurveTo(530,500,560,520);x.stroke();x.restore();
+    // phrase sits between
+    // 龍舟
+    x.save();x.fillStyle=f.paper2;x.strokeStyle=f.gold;x.lineWidth=3;
+    x.beginPath();x.moveTo(200,740);x.quadraticCurveTo(180,700,215,690);x.quadraticCurveTo(500,770,770,720);
+    x.quadraticCurveTo(800,700,790,660);x.quadraticCurveTo(820,620,850,650);x.quadraticCurveTo(830,660,835,690);x.quadraticCurveTo(820,760,760,780);
+    x.quadraticCurveTo(480,810,240,780);x.closePath();x.fill();x.stroke();
+    x.fillStyle=f.gold;circle(x,828,652,5);x.fill();
+    for(let i=0;i<7;i++){const px=290+i*65;x.beginPath();x.moveTo(px,745);x.lineTo(px-35,815);x.stroke();circle(x,px+5,725,10);x.fill()}
+    x.restore();
+    // waves
+    x.save();x.strokeStyle=f.gold;x.lineWidth=2.5;
+    for(let row=0;row<3;row++){x.globalAlpha=.8-row*.2;for(let i=0;i<10;i++){const cx=100+i*90+(row%2)*45,cy=830+row*38;x.beginPath();x.arc(cx,cy,40,Math.PI*1.1,Math.PI*1.9);x.stroke()}}
+    x.restore();
+    return 650;
+  },
+  midautumn(x,f){
+    stars(x,f,11,90,[70,190,930,950]);
+    const g=x.createRadialGradient(470,450,30,500,480,270);g.addColorStop(0,"#fff0c2");g.addColorStop(.7,f.gold);g.addColorStop(1,"#d9a94a");
+    x.fillStyle=g;circle(x,500,480,270);x.fill();
+    x.fillStyle="rgba(150,100,30,.15)";[[420,390,40],[600,430,28],[560,560,50],[380,520,22]].forEach(([a,b,r])=>{circle(x,a,b,r);x.fill()});
+    // 玉兔
+    x.fillStyle=f.paper2;x.globalAlpha=.85;
+    x.beginPath();x.ellipse(560,600,70,52,0,0,Math.PI*2);x.fill();circle(x,620,555,34);x.fill();
+    x.beginPath();x.ellipse(612,495,11,42,-.25,0,Math.PI*2);x.fill();x.beginPath();x.ellipse(637,500,11,40,.2,0,Math.PI*2);x.fill();
+    circle(x,495,615,18);x.fill();x.globalAlpha=1;
+    cloud(x,f,300,720,1.3,f.paper);cloud(x,f,690,760,1.1,f.paper);
+    // 桂花
+    const r=rand(3);x.fillStyle=f.gold;for(let i=0;i<14;i++){const cx=130+r()*120,cy=230+r()*140;for(let k=0;k<4;k++){circle(x,cx+Math.cos(k*1.57)*5,cy+Math.sin(k*1.57)*5,4);x.fill()}}
+    return 880;
+  },
+  chongyang(x,f){
+    mountains(x,f,950,[
+      {c:"#8a2a17",k:60,p:[[220,720],[420,800],[640,690],[940,780]]},
+      {c:f.paper2,k:40,p:[[180,860],[400,800],[620,870],[820,810],[940,860]]}]);
+    // 菊花
+    const cx=500,cy=470;
+    const petals=(n,len,w,col,rot)=>{x.fillStyle=col;x.strokeStyle=f.paper2;x.lineWidth=1.5;for(let i=0;i<n;i++){x.save();x.translate(cx,cy);x.rotate(rot+i*2*Math.PI/n);x.beginPath();x.ellipse(0,-len/2,w,len/2,0,0,Math.PI*2);x.fill();x.stroke();x.restore()}};
+    petals(30,250,18,"#e9a93a",0);petals(24,190,16,f.gold,.1);petals(18,130,14,"#ffe3a0",.2);
+    x.fillStyle=f.paper2;circle(x,cx,cy,72);x.fill();x.strokeStyle=f.gold;x.lineWidth=3;x.stroke();
+    x.fillStyle=f.gold;x.font=`700 100px ${DISP}`;x.textAlign="center";x.textBaseline="middle";x.fillText("壽",cx,cy+4);
+    // 茱萸
+    x.strokeStyle=f.gold;x.lineWidth=3;x.beginPath();x.moveTo(890,210);x.quadraticCurveTo(800,240,760,320);x.stroke();
+    x.fillStyle="#2f6b3f";[[820,240,.6],[790,280,-.4]].forEach(([a,b,r])=>{x.save();x.translate(a,b);x.rotate(r);x.beginPath();x.ellipse(0,0,14,34,0,0,Math.PI*2);x.fill();x.restore()});
+    x.fillStyle="#e2391f";x.strokeStyle=f.gold;x.lineWidth=1.5;[[760,330],[778,345],[745,350],[765,365],[790,325],[750,312]].forEach(([a,b])=>{circle(x,a,b,11);x.fill();x.stroke()});
+    return 900;
+  },
+  dongzhi(x,f){
+    snow(x,f,5,26,[80,200,920,930]);
+    // steam
+    x.save();x.strokeStyle=INK;x.globalAlpha=.55;x.lineWidth=4;x.lineCap="round";
+    for(const sx of [430,500,570]){x.beginPath();x.moveTo(sx,430);x.bezierCurveTo(sx-30,390,sx+30,350,sx,300);x.stroke()}x.restore();
+    // 湯圓
+    const balls=[[400,500,"#fff6ea"],[470,485,"#f7b6b6"],[540,488,"#fff6ea"],[610,502,"#f7b6b6"],[505,515,"#fff6ea"]];
+    balls.forEach(([a,b,c])=>{x.fillStyle=c;circle(x,a,b,44);x.fill();x.fillStyle="rgba(255,255,255,.6)";circle(x,a-14,b-16,10);x.fill()});
+    // bowl
+    x.fillStyle=f.gold;x.beginPath();x.moveTo(270,530);x.lineTo(730,530);x.quadraticCurveTo(720,720,560,740);x.lineTo(440,740);x.quadraticCurveTo(280,720,270,530);x.closePath();x.fill();
+    x.fillStyle=f.paper2;x.fillRect(420,740,160,24);
+    x.strokeStyle=f.paper2;x.lineWidth=4;x.beginPath();x.moveTo(300,600);x.lineTo(700,600);x.stroke();
+    x.fillStyle=f.paper2;x.font=`700 70px ${DISP}`;x.textAlign="center";x.textBaseline="middle";x.fillText("團　圓",500,660);
+    x.strokeStyle=f.gold;x.lineWidth=4;x.beginPath();x.ellipse(500,530,232,24,0,0,Math.PI*2);x.stroke();
+    return 880;
+  },
+  xmas(x,f){
+    snow(x,f,9,30,[80,200,920,930]);
+    x.fillStyle="#7a4a22";x.fillRect(470,740,60,70);
+    const tiers=[[300,440,170],[400,560,230],[520,720,290]];
+    tiers.forEach(([top,bot,w])=>{x.fillStyle="#2f8052";x.beginPath();x.moveTo(500,top-60);x.lineTo(500-w,bot);x.lineTo(500+w,bot);x.closePath();x.fill();x.strokeStyle=f.gold;x.lineWidth=3;x.stroke()});
+    x.strokeStyle=f.gold;x.lineWidth=3;x.globalAlpha=.8;x.beginPath();x.moveTo(390,420);x.quadraticCurveTo(500,470,600,400);x.moveTo(330,560);x.quadraticCurveTo(500,620,660,530);x.moveTo(280,690);x.quadraticCurveTo(500,760,720,670);x.stroke();x.globalAlpha=1;
+    [[440,380,"#d9332b"],[560,455,f.gold],[380,510,f.gold],[620,580,"#d9332b"],[470,600,"#d9332b"],[330,660,"#d9332b"],[560,680,f.gold],[680,700,"#d9332b"]].forEach(([a,b,c])=>{x.fillStyle=c;circle(x,a,b,15);x.fill()});
+    // star
+    x.fillStyle=f.gold;x.beginPath();for(let i=0;i<10;i++){const r=i%2?22:52,a=-Math.PI/2+i*Math.PI/5;x.lineTo(500+Math.cos(a)*r,232+Math.sin(a)*r)}x.closePath();x.fill();
+    return 885;
+  },
+  newyear(x,f){
+    stars(x,f,13,60,[70,190,930,940]);
+    burst(x,f,250,330,130,18,f.gold);burst(x,f,760,300,110,16,"#ffd9a6");burst(x,f,800,700,90,14,f.gold);burst(x,f,210,690,80,12,"#ffd9a6");
+    x.fillStyle=f.gold;x.font=`700 230px ${DISP}`;x.textAlign="center";x.textBaseline="middle";x.fillText(String(year),500,540);
+    x.strokeStyle=f.gold;x.lineWidth=2;x.beginPath();x.moveTo(300,680);x.lineTo(700,680);x.stroke();
+    return 870;
+  },
+  mother(x,f){
+    // stems
+    x.strokeStyle="#3f7a45";x.lineWidth=7;x.lineCap="round";
+    [[360,400],[500,330],[640,400]].forEach(([a,b])=>{x.beginPath();x.moveTo(a,b+60);x.quadraticCurveTo((a+500)/2,600,500,790);x.stroke()});
+    x.fillStyle="#3f7a45";[[420,620,-.7],[580,640,.7]].forEach(([a,b,r])=>{x.save();x.translate(a,b);x.rotate(r);x.beginPath();x.ellipse(0,0,12,60,0,0,Math.PI*2);x.fill();x.restore()});
+    const carnation=(cx,cy,s,c1,c2)=>{
+      for(let L=0;L<3;L++){x.fillStyle=L%2?c2:c1;x.beginPath();const w=(1-L*.2)*s,top=cy-s*.55+L*s*.18;
+        x.moveTo(cx-w,cy+s*.2);for(let i=0;i<=14;i++){const px=cx-w+i*(2*w/14),py=top+Math.abs(i-7)*s*.035+(i%2?-s*.08:0);x.lineTo(px,py)}
+        x.lineTo(cx+w,cy+s*.2);x.quadraticCurveTo(cx,cy+s*.5,cx-w,cy+s*.2);x.fill();x.strokeStyle="rgba(255,255,255,.35)";x.lineWidth=2;x.stroke()}
+      x.fillStyle="#3f7a45";x.beginPath();x.moveTo(cx-s*.3,cy+s*.35);x.lineTo(cx+s*.3,cy+s*.35);x.lineTo(cx+s*.1,cy+s*.75);x.lineTo(cx-s*.1,cy+s*.75);x.closePath();x.fill()};
+    carnation(360,370,105,"#f06a7c","#ffb3bd");carnation(640,370,105,"#f06a7c","#ffb3bd");carnation(500,300,125,"#e23a4f","#ff8a98");
+    // ribbon
+    x.fillStyle=f.gold;x.beginPath();x.ellipse(455,720,48,24,-.4,0,Math.PI*2);x.fill();x.beginPath();x.ellipse(545,720,48,24,.4,0,Math.PI*2);x.fill();
+    circle(x,500,722,18);x.fill();x.beginPath();x.moveTo(490,735);x.lineTo(450,820);x.lineTo(475,815);x.lineTo(500,740);x.moveTo(510,735);x.lineTo(550,820);x.lineTo(525,815);x.lineTo(500,740);x.fill();
+    return 885;
+  },
+  father(x,f){
+    const g=x.createRadialGradient(560,420,10,560,420,170);g.addColorStop(0,"#ffe6a6");g.addColorStop(1,f.gold);x.fillStyle=g;circle(x,560,430,160);x.fill();
+    x.strokeStyle=f.gold;x.lineWidth=3;x.globalAlpha=.5;for(let i=0;i<12;i++){const a=Math.PI+i*Math.PI/11;x.beginPath();x.moveTo(560+Math.cos(a)*190,430+Math.sin(a)*190);x.lineTo(560+Math.cos(a)*240,430+Math.sin(a)*240);x.stroke()}x.globalAlpha=1;
+    mountains(x,f,950,[
+      {c:"#6e2216",k:30,p:[[260,640],[470,520],[700,650],[940,560]]},
+      {c:f.paper2,k:30,p:[[200,780],[420,700],[640,790],[860,720],[940,760]]}]);
+    pine(x,f,200,820,300);
+    return 900;
+  },
+};
+
+/* ---------- second design per festival (換一張) ---------- */
+function mum(x,f,cx,cy,R,inner){
+  const petals=(n,len,w,col,rot)=>{x.fillStyle=col;x.strokeStyle=f.paper2;x.lineWidth=1.2;for(let i=0;i<n;i++){x.save();x.translate(cx,cy);x.rotate(rot+i*2*Math.PI/n);x.beginPath();x.ellipse(0,-len/2,w,len/2,0,0,Math.PI*2);x.fill();x.stroke();x.restore()}};
+  petals(26,R,R*.075,"#e9a93a",0);petals(20,R*.75,R*.065,f.gold,.1);petals(14,R*.5,R*.06,"#ffe3a0",.2);
+  x.fillStyle=inner||"#c9741f";circle(x,cx,cy,R*.18);x.fill();
+}
+function plum(x,cx,cy,r,col){
+  x.fillStyle=col;for(let i=0;i<5;i++){const a=-Math.PI/2+i*2*Math.PI/5;circle(x,cx+Math.cos(a)*r*.62,cy+Math.sin(a)*r*.62,r*.5);x.fill()}
+  x.fillStyle="#f2c75c";circle(x,cx,cy,r*.22);x.fill();
+}
+function branch(x,pts,w){
+  x.save();x.strokeStyle="#4a2a1a";x.lineCap="round";x.lineWidth=w;x.beginPath();x.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++){const [a,b]=pts[i-1],[c,d]=pts[i];x.quadraticCurveTo((a+c)/2+12,(b+d)/2-12,c,d)}x.stroke();x.restore();
+}
+function scallop(x,cx,cy,r,n,amp){
+  x.beginPath();for(let i=0;i<=n*8;i++){const a=i*2*Math.PI/(n*8),rr=r+amp*Math.abs(Math.sin(a*n/2));x.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr)}x.closePath();
+}
+function heart(x,cx,cy,s){
+  x.beginPath();x.moveTo(cx,cy+s*.9);x.bezierCurveTo(cx-s*1.3,cy+s*.1,cx-s*.9,cy-s*.95,cx,cy-s*.4);
+  x.bezierCurveTo(cx+s*.9,cy-s*.95,cx+s*1.3,cy+s*.1,cx,cy+s*.9);x.closePath();
+}
+function bigChar(x,ch,cx,cy,size,col){x.fillStyle=col;x.font=`700 ${size}px ${DISP}`;x.textAlign="center";x.textBaseline="middle";x.fillText(ch,cx,cy)}
+
+Object.assign(TPL,{
+  chongyang2(x,f){
+    x.fillStyle="#ffe3a0";x.globalAlpha=.9;circle(x,260,300,70);x.fill();x.globalAlpha=1;
+    x.strokeStyle=f.gold;x.lineWidth=3;[[600,260],[660,300],[720,250],[780,290]].forEach(([a,b])=>{x.beginPath();x.moveTo(a-22,b-10);x.lineTo(a,b);x.lineTo(a+22,b-10);x.stroke()});
+    mountains(x,f,950,[
+      {c:"#8a2a17",k:30,p:[[300,620],[500,400],[700,620],[940,700]]},
+      {c:f.paper2,k:30,p:[[220,800],[440,760],[640,820],[860,760],[940,800]]}]);
+    // 涼亭 on the peak
+    x.fillStyle=f.gold;x.beginPath();x.moveTo(430,395);x.quadraticCurveTo(500,330,570,395);x.quadraticCurveTo(500,378,430,395);x.fill();
+    x.fillRect(470,392,8,40);x.fillRect(522,392,8,40);x.fillRect(460,428,80,6);
+    mum(x,f,190,800,120);mum(x,f,810,800,120);mum(x,f,330,850,90);
+    return 600;
+  },
+  dongzhi2(x,f){
+    x.fillStyle=f.paper2;circle(x,500,510,290);x.fill();
+    x.strokeStyle=f.gold;x.lineWidth=6;circle(x,500,510,290);x.stroke();x.lineWidth=2;circle(x,500,510,272);x.stroke();
+    x.save();circle(x,500,510,270);x.clip();
+    snow(x,f,21,22,[230,240,770,780]);
+    branch(x,[[230,700],[360,600],[450,520],[600,420],[760,330]],12);branch(x,[[450,520],[520,600],[640,640]],7);branch(x,[[600,420],[620,330]],6);
+    [[360,600],[430,545],[520,470],[600,420],[690,370],[760,330],[520,600],[640,640],[620,330],[400,640]].forEach(([a,b],i)=>plum(x,a,b,i%3?24:30,i%2?"#ffd0d4":"#ff8a96"));
+    x.restore();
+    return 880;
+  },
+  xmas2(x,f){
+    snow(x,f,31,26,[80,200,920,930]);
+    const cx=500,cy=510,R=230;
+    for(let i=0;i<48;i++){const a=i*2*Math.PI/48;x.save();x.translate(cx+Math.cos(a)*R,cy+Math.sin(a)*R);x.rotate(a+(i%2?.6:-.6));
+      x.fillStyle=i%3?"#2f8052":"#3f9a62";x.beginPath();x.ellipse(0,0,22,46,0,0,Math.PI*2);x.fill();x.restore()}
+    const r=rand(4);for(let i=0;i<16;i++){const a=r()*Math.PI*2;x.fillStyle="#d9332b";circle(x,cx+Math.cos(a)*R,cy+Math.sin(a)*R,11);x.fill()}
+    x.fillStyle="#d9332b";x.beginPath();x.ellipse(cx-50,cy+R,55,30,-.3,0,Math.PI*2);x.fill();x.beginPath();x.ellipse(cx+50,cy+R,55,30,.3,0,Math.PI*2);x.fill();
+    circle(x,cx,cy+R,20);x.fill();x.beginPath();x.moveTo(cx-10,cy+R+10);x.lineTo(cx-45,cy+R+100);x.lineTo(cx-20,cy+R+95);x.lineTo(cx,cy+R+20);x.moveTo(cx+10,cy+R+10);x.lineTo(cx+45,cy+R+100);x.lineTo(cx+20,cy+R+95);x.lineTo(cx,cy+R+20);x.fill();
+    bigChar(x,"安",cx,cy,210,f.gold);
+    return 885;
+  },
+  newyear2(x,f){
+    bigChar(x,String(year),500,300,170,f.gold);
+    const hy=700;
+    x.save();x.beginPath();x.rect(44,0,W-88,hy);x.clip();
+    x.strokeStyle=f.gold;x.lineWidth=3;x.globalAlpha=.5;for(let i=0;i<13;i++){const a=Math.PI+i*Math.PI/12;x.beginPath();x.moveTo(500+Math.cos(a)*250,hy+Math.sin(a)*250);x.lineTo(500+Math.cos(a)*310,hy+Math.sin(a)*310);x.stroke()}x.globalAlpha=1;
+    const g=x.createRadialGradient(500,hy,20,500,hy,220);g.addColorStop(0,"#fff0c2");g.addColorStop(1,f.gold);x.fillStyle=g;circle(x,500,hy,220);x.fill();x.restore();
+    cloud(x,f,230,560,1.1,f.paper);cloud(x,f,780,600,.9,f.paper);
+    x.strokeStyle=f.gold;x.lineWidth=2.5;for(let row=0;row<5;row++){x.globalAlpha=.9-row*.12;for(let i=0;i<12;i++){const cx=60+i*80+(row%2)*40,cy=hy+20+row*40;x.beginPath();x.arc(cx,cy,34,Math.PI*1.1,Math.PI*1.9);x.stroke()}}x.globalAlpha=1;
+    return 920;
+  },
+  spring2(x,f){
+    const o=occ(f);
+    branch(x,[[60,250],[180,300],[300,280],[400,330]],10);branch(x,[[180,300],[230,380]],6);
+    [[180,300],[300,280],[400,330],[230,380],[260,250]].forEach(([a,b],i)=>plum(x,a,b,i%2?20:26,i%2?"#ffd0d4":"#ffffff"));
+    const cracker=(sx,sy,tilt)=>{for(let i=0;i<9;i++){const px=sx+i*tilt,py=sy+i*58;x.save();x.translate(px,py);x.rotate(i%2?.22:-.22);
+      x.fillStyle="#e2231a";x.fillRect(-18,-24,36,48);x.fillStyle=f.gold;x.fillRect(-18,-24,36,7);x.fillRect(-18,17,36,7);x.restore()}
+      x.strokeStyle=f.gold;x.lineWidth=3;x.beginPath();x.moveTo(sx,sy-80);x.lineTo(sx+8*tilt,sy+8*58);x.stroke()};
+    cracker(820,290,-2);
+    x.fillStyle=f.gold;scallop(x,500,520,230,12,22);x.fill();
+    x.fillStyle=f.paper2;circle(x,500,520,195);x.fill();x.strokeStyle=f.gold;x.lineWidth=3;circle(x,500,520,180);x.stroke();
+    bigChar(x,o.zodiac,500,530,250,f.gold);
+    x.fillStyle=f.gold;x.font=`700 40px ${DISP}`;x.textAlign="center";x.fillText(`${o.gz}年`,500,810);
+    return 880;
+  },
+  yuanxiao2(x,f){
+    stars(x,f,17,80,[70,190,930,940]);
+    burst(x,f,200,330,110,16,f.gold);burst(x,f,800,380,95,14,"#ffd9a6");burst(x,f,780,720,70,12,f.gold);burst(x,f,220,700,80,12,"#ffd9a6");
+    lantern(x,f,500,190,470,330,"圓");
+    return 880;
+  },
+  mother2(x,f){
+    const r=rand(8);
+    for(let i=0;i<22;i++){const a=i*2*Math.PI/22,rr=300+r()*30;plum(x,500+Math.cos(a)*rr,510+Math.sin(a)*rr*.95,14+r()*10,i%2?"#ffb3bd":"#ff8a98")}
+    const g=x.createLinearGradient(0,280,0,760);g.addColorStop(0,"#ff8a98");g.addColorStop(1,"#d93a52");x.fillStyle=g;heart(x,500,500,240);x.fill();
+    x.strokeStyle=f.gold;x.lineWidth=5;x.stroke();x.lineWidth=2;heart(x,500,505,215);x.stroke();
+    bigChar(x,"愛",500,500,200,"#fff3dc");
+    return 885;
+  },
+  duanwu2(x,f){
+    const leafs=(cx,dir)=>{for(let i=0;i<5;i++){x.save();x.translate(cx,560);x.rotate(dir*(.15+i*.09));x.fillStyle=i%2?"#3f8a5c":"#2f6b48";x.beginPath();x.ellipse(0,-150,14,250,0,0,Math.PI*2);x.fill();x.restore()}
+      x.fillStyle="#e2231a";x.fillRect(cx-28,620,56,26)};
+    leafs(210,-1);leafs(790,1);
+    x.strokeStyle=f.gold;x.lineWidth=3;x.beginPath();x.moveTo(500,200);x.lineTo(500,330);x.stroke();
+    x.fillStyle=f.gold;circle(x,500,320,14);x.fill();
+    const g=x.createLinearGradient(0,330,0,700);g.addColorStop(0,"#e2463a");g.addColorStop(1,"#a8180f");x.fillStyle=g;heart(x,500,520,200);x.fill();
+    x.strokeStyle=f.gold;x.lineWidth=5;x.stroke();x.setLineDash([8,8]);x.lineWidth=2;heart(x,500,525,175);x.stroke();x.setLineDash([]);
+    bigChar(x,"安",500,520,170,f.gold);
+    x.strokeStyle=f.gold;x.lineWidth=2;for(let i=-4;i<=4;i++){x.beginPath();x.moveTo(500+i*3,700);x.lineTo(500+i*6,800);x.stroke()}
+    x.fillStyle=f.gold;x.fillRect(486,694,28,14);
+    return 870;
+  },
+  father2(x,f){
+    branch(x,[[940,230],[800,270],[680,250]],12);
+    [[800,270],[700,250],[860,240]].forEach(([a,b])=>{x.strokeStyle="#3f7a45";x.lineWidth=3;for(let k=0;k<12;k++){const ang=k*Math.PI/6;x.beginPath();x.moveTo(a,b);x.lineTo(a+Math.cos(ang)*36,b+Math.sin(ang)*36);x.stroke()}});
+    // steam
+    x.save();x.strokeStyle="#fff3dc";x.globalAlpha=.55;x.lineWidth=4;x.lineCap="round";for(const sx of [380,440]){x.beginPath();x.moveTo(sx,430);x.bezierCurveTo(sx-30,390,sx+30,350,sx,300);x.stroke()}
+    for(const sx of [700]){x.beginPath();x.moveTo(sx,610);x.bezierCurveTo(sx-25,580,sx+25,550,sx,510);x.stroke()}x.restore();
+    // teapot
+    x.fillStyle=f.gold;x.strokeStyle=f.paper2;x.lineWidth=3;
+    x.beginPath();x.moveTo(530,560);x.quadraticCurveTo(620,540,640,470);x.lineTo(660,478);x.quadraticCurveTo(650,580,540,620);x.closePath();x.fill();
+    x.lineWidth=14;x.strokeStyle=f.gold;x.beginPath();x.arc(275,575,65,Math.PI*.55,Math.PI*1.45);x.stroke();
+    x.beginPath();x.ellipse(410,580,150,115,0,0,Math.PI*2);x.fill();
+    x.fillStyle="#d9a94a";x.beginPath();x.ellipse(410,470,70,18,0,0,Math.PI*2);x.fill();x.fillStyle=f.gold;circle(x,410,452,14);x.fill();
+    x.strokeStyle=f.paper2;x.lineWidth=3;x.beginPath();x.ellipse(410,580,110,80,0,0,Math.PI*2);x.stroke();
+    bigChar(x,"德",410,585,110,f.paper2);
+    // cup
+    x.fillStyle=f.gold;x.beginPath();x.moveTo(640,620);x.lineTo(760,620);x.lineTo(740,700);x.lineTo(660,700);x.closePath();x.fill();
+    x.fillStyle="#d9a94a";x.beginPath();x.ellipse(700,620,60,12,0,0,Math.PI*2);x.fill();
+    x.fillStyle=f.paper2;x.fillRect(240,700,560,14);
+    return 880;
+  },
+  midautumn2(x,f){
+    stars(x,f,23,80,[70,190,930,950]);
+    x.fillStyle="#fff0c2";circle(x,800,280,70);x.fill();
+    branch(x,[[60,230],[190,280],[300,260]],9);const r=rand(6);x.fillStyle=f.gold;for(let i=0;i<16;i++){const cx=110+r()*200,cy=230+r()*110;for(let k=0;k<4;k++){circle(x,cx+Math.cos(k*1.57)*5,cy+Math.sin(k*1.57)*5,4);x.fill()}}
+    x.fillStyle="#c98a3a";scallop(x,500,540,240,16,20);x.fill();x.strokeStyle="#8a5420";x.lineWidth=4;x.stroke();
+    x.fillStyle="#d99b4a";circle(x,500,540,190);x.fill();x.strokeStyle="#8a5420";x.lineWidth=4;circle(x,500,540,175);x.stroke();
+    x.lineWidth=2;for(let i=0;i<8;i++){const a=i*Math.PI/4;x.beginPath();x.arc(500+Math.cos(a)*150,540+Math.sin(a)*150,18,0,Math.PI*2);x.stroke()}
+    bigChar(x,"團圓",500,545,110,"#8a5420");
+    return 880;
+  },
+});
+
+/* ---------- full card ---------- */
+function wrapLines(x,text,maxW,indentPx){
+  const lines=[];let line="",first=true;
+  for(const ch of text){
+    const lim=first?maxW-indentPx:maxW;
+    if(x.measureText(line+ch).width>lim && line){
+      if("，。、！？：；」』）".includes(ch)){line+=ch;lines.push({t:line,first});line="";first=false;continue}
+      lines.push({t:line,first});line=ch;first=false;
+    } else line+=ch;
+  }
+  if(line) lines.push({t:line,first});
+  return lines;
+}
+function recipient(){const v=$("toSel").value;return v==="__custom"?$("toCustom").value.trim():v}
+function drawCard(c){
+  const f=cur, x=c.getContext("2d");
+  x.setTransform(1,0,0,1,0,0);x.clearRect(0,0,W,H);x.globalAlpha=1;
+  // paper
+  x.fillStyle=f.paper;x.fillRect(0,0,W,H);
+  let g=x.createLinearGradient(0,0,0,H);g.addColorStop(0,"rgba(255,255,255,.06)");g.addColorStop(1,"rgba(0,0,0,.25)");x.fillStyle=g;x.fillRect(0,0,W,H);
+  x.globalAlpha=.07;x.fillStyle=f.gold;for(let yy=22;yy<H;yy+=44)for(let xx=22;xx<W;xx+=44){circle(x,xx,yy,2.2);x.fill()}x.globalAlpha=1;
+  // template art
+  x.save();x.beginPath();x.rect(44,44,W-88,H-88);x.clip();const phraseY=TPL[f.tpl+(tplIdx%2?"2":"")](x,f);x.restore();
+  // phrase
+  x.save();x.fillStyle=f.gold;x.font=`700 72px ${DISP}`;x.textAlign="center";x.textBaseline="middle";
+  x.shadowColor="rgba(0,0,0,.35)";x.shadowBlur=12;
+  try{x.letterSpacing="20px"}catch(e){} x.fillText(phraseOf(f),W/2+10,phraseY);x.restore();
+  // frame
+  x.strokeStyle=f.gold;x.globalAlpha=.9;x.lineWidth=3;x.strokeRect(28,28,W-56,H-56);x.globalAlpha=.5;x.lineWidth=1;x.strokeRect(40,40,W-80,H-80);x.globalAlpha=1;
+  const corner=(tx,ty,sx,sy)=>{x.save();x.translate(tx,ty);x.scale(sx*2,sy*2);x.lineWidth=1.5;x.strokeStyle=f.gold;
+    x.beginPath();x.moveTo(4,40);x.lineTo(4,4);x.lineTo(40,4);x.moveTo(10,34);x.lineTo(10,10);x.lineTo(34,10);x.moveTo(10,22);x.lineTo(18,22);x.lineTo(18,14);x.stroke();
+    x.fillStyle=f.gold;circle(x,18,14,2);x.fill();x.restore()};
+  corner(16,16,1,1);corner(W-16,16,-1,1);corner(16,H-16,1,-1);corner(W-16,H-16,-1,-1);
+  // header
+  x.fillStyle=f.gold;x.textBaseline="top";x.textAlign="left";x.font=`700 60px ${DISP}`;x.fillText(f.name,96,92);
+  x.fillStyle=INK;x.globalAlpha=.85;x.textAlign="right";x.font=`26px ${BODY}`;const o=occ(f);x.fillText(fmtDate(o.date),904,100);
+  x.font=`24px ${BODY}`;x.fillText(`${o.gz}年　農曆${o.lunar}`,904,138);x.globalAlpha=1;
+  // message panel
+  x.fillStyle="rgba(0,0,0,.18)";x.fillRect(80,975,W-160,350);
+  x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=1.5;x.strokeRect(80,975,W-160,350);x.globalAlpha=1;
+  x.textAlign="left";x.textBaseline="alphabetic";x.fillStyle=INK;
+  const L=120,maxW=W-2*L,lh=62;let y=1045;
+  const to=recipient(),from=$("fromIn").value.trim(),msg=msgOf(f);
+  if(to){x.font=`600 34px ${BODY}`;x.fillText(`親愛的${to}：`,L,y);y+=lh}
+  x.font=`34px ${BODY}`;
+  for(const ln of wrapLines(x,msg,maxW,68)){x.fillText(ln.t,ln.first?L+68:L,y);y+=lh}
+  if(from){x.font=`600 34px ${BODY}`;x.textAlign="right";x.fillText(from,W-L,Math.max(y+4,1295))}
+  c.setAttribute("aria-label",`${year} ${f.name}賀卡：${phraseOf(f)}。${to?"親愛的"+to+"："+" ":""}${msg}${from?" "+from:""}`);
+}
+
+/* ---------- UI ---------- */
+// default: the next festival from today, in whatever year it falls
+function pickDefault(){
+  for(const y of YEARS){const hit=FESTS.filter(f=>dayDiff(TABLE[y][f.id][0])>=0).sort((a,b)=>TABLE[y][a.id][0]<TABLE[y][b.id][0]?-1:1)[0];
+    if(hit) return {y,f:hit,d:dayDiff(TABLE[y][hit.id][0])}}
+  return {y:YEARS[YEARS.length-1],f:FESTS[0],d:null};
+}
+function buildYears(){
+  const sel=$("yearSel");YEARS.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=`${y} 年（${ganzhi(y)}・${ZOD[(y-4)%12]}年）`;sel.appendChild(o)});
+  sel.addEventListener("change",()=>{year=Number(sel.value);buildChips();render(true)});
+}
+function buildChips(){
+  const box=$("festChips");box.textContent="";
+  [...FESTS].sort((a,b)=>TABLE[year][a.id][0]<TABLE[year][b.id][0]?-1:1).forEach(f=>{
+    const b=document.createElement("button");b.type="button";b.className="chip";b.dataset.id=f.id;
+    const [,m,d]=TABLE[year][f.id][0].split("-").map(Number);b.innerHTML=`${f.name}<small>${m}/${d}</small>`;b.addEventListener("click",()=>select(f.id));box.appendChild(b)});
+}
+function render(anim){
+  const c=$("card");drawCard(c);
+  const o=occ(cur);$("dateNote").textContent=`日期自動帶入：${fmtDate(o.date)}，${o.gz}年 農曆${o.lunar}`;
+  $("motifNote").textContent=`${cur.name}樣板 ${tplIdx%2+1}／2：${tplIdx%2?cur.motif2:cur.motif}`;
+  document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===cur.id)));
+  if(anim){c.classList.remove("flip");void c.offsetWidth;c.classList.add("flip")}
+}
+function select(id){cur=FESTS.find(f=>f.id===id);msgIdx=0;tplIdx=0;render(true)}
+function cardText(){
+  const to=recipient(),from=$("fromIn").value.trim(),lines=[];
+  if(to)lines.push(`親愛的${to}：`);lines.push(`【${cur.name}・${phraseOf(cur)}】`);lines.push(msgOf(cur));if(from)lines.push(from);
+  return lines.join("\n");
+}
+
+$("toSel").addEventListener("change",()=>{const cu=$("toSel").value==="__custom";$("toCustom").disabled=!cu;if(cu)$("toCustom").focus();render(false)});
+$("toCustom").addEventListener("input",()=>render(false));
+$("fromIn").addEventListener("input",()=>render(false));
+$("shuffle").addEventListener("click",()=>{msgIdx++;render(false)});
+$("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
+$("copy").addEventListener("click",()=>{
+  const text=cardText(),note=$("copyNote");
+  navigator.clipboard.writeText(text).then(()=>{note.textContent="已複製，可以貼到 LINE 或訊息裡。"},
+    ()=>{note.textContent="無法自動複製，請長按下面這段文字複製：\n"+text;note.style.whiteSpace="pre-line"});
+});
+let downloadsApi=null;
+$("dl").addEventListener("click",async()=>{
+  const note=$("copyNote");
+  const standalone=!window.claude;
+  if(!downloadsApi&&!standalone){note.textContent="這個檢視方式無法下載，請長按或截圖保存賀卡。";return}
+  try{
+    const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
+    const blob=await new Promise(r=>c.toBlob(r,"image/png"));
+    const filename=`${year}${cur.name}賀卡.png`;
+    if(standalone){ // opened as a plain web page: use an ordinary download link
+      const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
+    } else await downloadsApi.save({filename,data:blob});
+    note.textContent="賀卡圖片已下載。";
+  }catch(e){note.textContent=e&&e.code==="declined"?"已取消下載。":"下載沒有成功，請改用截圖保存賀卡。"}
+});
+if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").hidden=true})();
+
+const def=pickDefault();year=def.y;cur=def.f;
+buildYears();$("yearSel").value=String(year);buildChips();
+if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`:`最近的節日是 ${year} 年${cur.name}，還有 ${def.d} 天，已幫你選好。`;
+render(false);
+// redraw once the web fonts arrive so canvas text uses them
+Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖誕元旦春宵母親端午父中秋福壽安康團圓添歲平喜樂新禧三羊開泰花好月慈恩永念如山金獻瑞家紫燕迎戶歡元宵樂2027"),
+  document.fonts.load(`34px "Noto Serif TC"`,"親愛的"),document.fonts.load(`600 34px "Noto Serif TC"`,"親愛的")])
+  .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
+</script>
+</body>
+</html>
