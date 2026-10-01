@@ -44,6 +44,11 @@ header.top p{margin:0;color:var(--muted)}
 .btn{font:inherit;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
 .btn.primary{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
 .hint{font-size:13px;color:var(--muted);margin:0}
+.save-box{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px;overflow:auto}
+.save-box[hidden]{display:none}
+.save-panel{background:var(--panel);color:var(--fg);border-radius:10px;padding:16px;max-width:460px;width:100%;display:grid;gap:12px;justify-items:center}
+.save-panel img{width:100%;height:auto;max-height:70vh;object-fit:contain;border-radius:4px;-webkit-touch-callout:default;user-select:auto}
+.save-panel p{margin:0;font-size:14px;text-align:center}
 .motif{font-size:13px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
 .stage{min-width:0;display:grid;gap:14px;justify-items:center}
 #card{width:100%;max-width:520px;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 18px 40px -18px rgba(60,10,10,.55);display:block}
@@ -111,6 +116,14 @@ header.top p{margin:0;color:var(--muted)}
   <section class="stage" aria-label="賀卡預覽">
     <canvas id="card" width="1000" height="1400" role="img" aria-label="賀卡預覽"></canvas>
   </section>
+</div>
+
+<div class="save-box" id="saveBox" role="dialog" aria-modal="true" aria-label="儲存賀卡圖片" hidden>
+  <div class="save-panel">
+    <img id="saveImg" alt="">
+    <p>手機請長按圖片，選「儲存圖片」；電腦請在圖片上按右鍵，選「另存圖片」。</p>
+    <button class="btn primary" id="saveClose" type="button">關閉</button>
+  </div>
 </div>
 
 <script>
@@ -3497,22 +3510,36 @@ $("copy").addEventListener("click",()=>{
   navigator.clipboard.writeText(text).then(()=>{note.textContent="已複製，可以貼到 LINE 或訊息裡。"},
     ()=>{note.textContent="無法自動複製，請長按下面這段文字複製：\n"+text;note.style.whiteSpace="pre-line"});
 });
-let downloadsApi=null;
+let downloadsApi=null, lastUrl=null;
+// Viewers who only have the share link are not granted the download capability and the frame blocks
+// download links, so they get the card as a plain image to save with a long press or right click.
+function showImage(blob){
+  if(lastUrl)URL.revokeObjectURL(lastUrl);
+  lastUrl=URL.createObjectURL(blob);
+  $("saveImg").src=lastUrl;$("saveImg").alt=`${year} ${cur.name}賀卡`;
+  $("saveBox").hidden=false;$("saveClose").focus();
+}
+function hideImage(){$("saveBox").hidden=true}
+$("saveClose").addEventListener("click",hideImage);
+$("saveBox").addEventListener("click",e=>{if(e.target===$("saveBox"))hideImage()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("saveBox").hidden)hideImage()});
 $("dl").addEventListener("click",async()=>{
   const note=$("copyNote");
   const standalone=!window.claude;
-  if(!downloadsApi&&!standalone){note.textContent="這個檢視方式無法下載，請長按或截圖保存賀卡。";return}
   try{
     const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const filename=`${year}${cur.name}賀卡.png`;
     if(standalone){ // opened as a plain web page: use an ordinary download link
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    } else await downloadsApi.save({filename,data:blob});
-    note.textContent="賀卡圖片已下載。";
-  }catch(e){note.textContent=e&&e.code==="declined"?"已取消下載。":"下載沒有成功，請改用截圖保存賀卡。"}
+      note.textContent="賀卡圖片已下載。";
+    } else if(downloadsApi){
+      try{await downloadsApi.save({filename,data:blob});note.textContent="賀卡圖片已下載。"}
+      catch(e){if(e&&e.code==="declined"){note.textContent="已取消下載。"}else{showImage(blob);note.textContent="這裡無法直接下載，請長按圖片儲存。"}}
+    } else {showImage(blob);note.textContent="請長按（電腦按右鍵）圖片，選「儲存圖片」。"}
+  }catch(e){console.error(e);note.textContent="產生圖片沒有成功，請改用截圖保存賀卡。"}
 });
-if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").hidden=true})();
+if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").textContent="看圖並儲存"})();
 
 const def=pickDefault();year=def.y;cur=def.f;
 buildYears();$("yearSel").value=String(year);buildChips();

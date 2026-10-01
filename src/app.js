@@ -93,22 +93,36 @@ $("copy").addEventListener("click",()=>{
   navigator.clipboard.writeText(text).then(()=>{note.textContent="已複製，可以貼到 LINE 或訊息裡。"},
     ()=>{note.textContent="無法自動複製，請長按下面這段文字複製：\n"+text;note.style.whiteSpace="pre-line"});
 });
-let downloadsApi=null;
+let downloadsApi=null, lastUrl=null;
+// Viewers who only have the share link are not granted the download capability and the frame blocks
+// download links, so they get the card as a plain image to save with a long press or right click.
+function showImage(blob){
+  if(lastUrl)URL.revokeObjectURL(lastUrl);
+  lastUrl=URL.createObjectURL(blob);
+  $("saveImg").src=lastUrl;$("saveImg").alt=`${year} ${cur.name}賀卡`;
+  $("saveBox").hidden=false;$("saveClose").focus();
+}
+function hideImage(){$("saveBox").hidden=true}
+$("saveClose").addEventListener("click",hideImage);
+$("saveBox").addEventListener("click",e=>{if(e.target===$("saveBox"))hideImage()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("saveBox").hidden)hideImage()});
 $("dl").addEventListener("click",async()=>{
   const note=$("copyNote");
   const standalone=!window.claude;
-  if(!downloadsApi&&!standalone){note.textContent="這個檢視方式無法下載，請長按或截圖保存賀卡。";return}
   try{
     const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const filename=`${year}${cur.name}賀卡.png`;
     if(standalone){ // opened as a plain web page: use an ordinary download link
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
-    } else await downloadsApi.save({filename,data:blob});
-    note.textContent="賀卡圖片已下載。";
-  }catch(e){note.textContent=e&&e.code==="declined"?"已取消下載。":"下載沒有成功，請改用截圖保存賀卡。"}
+      note.textContent="賀卡圖片已下載。";
+    } else if(downloadsApi){
+      try{await downloadsApi.save({filename,data:blob});note.textContent="賀卡圖片已下載。"}
+      catch(e){if(e&&e.code==="declined"){note.textContent="已取消下載。"}else{showImage(blob);note.textContent="這裡無法直接下載，請長按圖片儲存。"}}
+    } else {showImage(blob);note.textContent="請長按（電腦按右鍵）圖片，選「儲存圖片」。"}
+  }catch(e){console.error(e);note.textContent="產生圖片沒有成功，請改用截圖保存賀卡。"}
 });
-if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").hidden=true})();
+if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").textContent="看圖並儲存"})();
 
 const def=pickDefault();year=def.y;cur=def.f;
 buildYears();$("yearSel").value=String(year);buildChips();
