@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>年節賀卡坊</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600&display=swap">
+<style>
+/* Layout: controls column on the left, the card (one canvas, also the download) on the right; stacks card-first on phones. */
+:root{
+  --bg:#f5efee; --fg:#2b1a1b; --muted:#7a5f60; --line:#e2d3d2; --panel:#fffaf9;
+  --chip:#efe2e1; --chip-on:#a8231f; --chip-on-fg:#fff6e6; --focus:#c8902c;
+  --display:"LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif;
+  --body:"Noto Serif TC","PMingLiU","Songti TC",serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
+  --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
+  --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:28px 48px;display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:32px;align-items:start}
+header.top{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+header.top h1{font-family:var(--display);font-weight:700;font-size:40px;margin:0;line-height:1.1}
+header.top p{margin:0;color:var(--muted)}
+#yearSel{max-width:260px}
+.controls{display:grid;gap:22px;min-width:0}
+.group{display:grid;gap:10px}
+.label{font-size:13px;letter-spacing:.12em;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--chip);color:var(--fg);font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:baseline}
+.chip small{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
+.chip[aria-pressed="true"] small{color:var(--chip-on-fg);opacity:.8}
+.chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.field{display:grid;gap:6px}
+.field input,.field select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{font:inherit;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.btn.primary{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.motif{font-size:13px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
+.stage{min-width:0;display:grid;gap:14px;justify-items:center}
+#card{width:100%;max-width:520px;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 18px 40px -18px rgba(60,10,10,.55);display:block}
+@media (prefers-reduced-motion:no-preference){
+  #card.flip{animation:pop .45s ease-out}
+  @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
+}
+@media (max-width:760px){
+  .wrap{grid-template-columns:minmax(0,1fr)}
+  .stage{order:-1}
+  header.top{order:-2}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1>年節賀卡坊</h1>
+    <p>給家中長輩的傳統喜氣賀卡，每個節日都有專屬樣板。</p>
+  </header>
+
+  <section class="controls" aria-label="賀卡設定">
+    <div class="group">
+      <span class="label">年份與節日</span>
+      <div class="field"><label for="yearSel" class="hint">西元年</label><select id="yearSel"></select></div>
+      <div class="chips" id="festChips" role="group" aria-label="節日"></div>
+      <span class="hint" id="nextNote"></span>
+      <p class="hint" id="dateNote"></p>
+      <p class="motif" id="motifNote"></p>
+    </div>
+
+    <div class="group">
+      <span class="label">稱呼與署名</span>
+      <div class="field">
+        <label for="toSel" class="hint">送給</label>
+        <select id="toSel">
+          <option>爸爸媽媽</option>
+          <option>爺爺奶奶</option>
+          <option>外公外婆</option>
+          <option>岳父岳母</option>
+          <option>公公婆婆</option>
+          <option>各位長輩</option>
+          <option value="__custom">自己輸入…</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field"><label for="toCustom" class="hint">自訂稱呼</label><input id="toCustom" placeholder="例如：舅舅舅媽" disabled></div>
+        <div class="field"><label for="fromIn" class="hint">署名（可留空）</label><input id="fromIn" value="Ted" placeholder="例如：小明敬上"></div>
+      </div>
+    </div>
+
+    <div class="group">
+      <span class="label">祝賀文字</span>
+      <div class="actions">
+        <button class="btn" id="swapArt" type="button">換一張</button>
+        <button class="btn" id="shuffle" type="button">換一句</button>
+        <button class="btn" id="copy" type="button">複製祝賀文字</button>
+        <button class="btn primary" id="dl" type="button">下載賀卡圖片</button>
+      </div>
+      <p class="hint" id="copyNote">每個節日有 10 張圖、20 句吉祥話可換。下載的 PNG 和右邊預覽一模一樣。</p>
+    </div>
+  </section>
+
+  <section class="stage" aria-label="賀卡預覽">
+    <canvas id="card" width="1000" height="1400" role="img" aria-label="賀卡預覽"></canvas>
+  </section>
+</div>
+
+<script>
