@@ -2,6 +2,15 @@
 
 給家中長輩的傳統喜氣賀卡產生器。單一 HTML 檔，不需要安裝或建置，用瀏覽器打開 `index.html` 就能使用。
 
+也可以裝成手機 App（PWA）：網址 <https://hoya-chen.github.io/greeting-card-generator/>
+
+## 裝到手機
+
+- **iPhone**：用 Safari 打開網址，按下方「分享」鈕，選「加入主畫面」。
+- **Android**：用 Chrome 打開網址，按頁面上的「安裝到手機桌面」，或在選單選「安裝應用程式」。
+- 裝好後桌面會出現紅底金字的「賀卡坊」圖示，全螢幕開啟；打開過一次之後，沒有網路也能做賀卡（字型也會存下來）。
+- 在手機上按「儲存／分享賀卡」會叫出分享選單，可以直接「儲存影像」到相簿，或傳到 LINE。
+
 
 ## 功能
 
@@ -39,3 +48,8 @@
 - `src/festivals/<節日>.js`：每個節日各一個檔案，裡面有 10 張樣板的繪圖程式與 20 句吉祥話。要新增樣板或祝賀詞，只要改這個檔案。
 - `tools/preview.js`：預覽單一節日的全部樣板（需要 Playwright），並檢查樣板數、祝賀詞數與長度。
 - `docs/`：樣板預覽圖。
+- `manifest.webmanifest`、`sw.js`、`icons/`：App 安裝設定、離線快取與圖示。改了 `index.html` 之後，把 `sw.js` 裡的 `VERSION` 加一，已安裝的手機才會更新。圖示由 `tools/icons.js` 產生（需要 Playwright）。
+
+## 部署（GitHub Pages）
+
+一次性設定：GitHub repo 的 Settings → Pages → Build and deployment，Source 選「Deploy from a branch」，分支選 `main`、資料夾選 `/ (root)`。之後每次合併到 `main` 都會自動更新網站。
