@@ -94,6 +94,9 @@ $("copy").addEventListener("click",()=>{
     ()=>{note.textContent="無法自動複製，請長按下面這段文字複製：\n"+text;note.style.whiteSpace="pre-line"});
 });
 let downloadsApi=null, lastUrl=null;
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const phone=matchMedia("(pointer:coarse)").matches;
+if(!window.claude&&phone)$("dl").textContent="儲存／分享賀卡";
 // Viewers who only have the share link are not granted the download capability and the frame blocks
 // download links, so they get the card as a plain image to save with a long press or right click.
 function showImage(blob){
@@ -113,7 +116,14 @@ $("dl").addEventListener("click",async()=>{
     const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const filename=`${year}${cur.name}賀卡.png`;
-    if(standalone){ // opened as a plain web page: use an ordinary download link
+    const file=typeof File==="function"?new File([blob],filename,{type:"image/png"}):null;
+    if(standalone&&phone&&file&&navigator.canShare&&navigator.canShare({files:[file]})){
+      // phones (and the installed app): the share sheet offers "儲存影像" and LINE directly
+      try{await navigator.share({files:[file],title:`${year} ${cur.name}賀卡`});note.textContent="已開啟分享選單，可選「儲存影像」或傳到 LINE。"}
+      catch(e){if(e&&e.name==="AbortError"){note.textContent="已取消。"}else{showImage(blob);note.textContent="請長按圖片，選「儲存圖片」。"}}
+    } else if(standalone&&phone&&isIOS){ // older iPhones: no file sharing, and download links misbehave in the installed app
+      showImage(blob);note.textContent="請長按圖片，選「加入照片」。";
+    } else if(standalone){ // opened as a plain web page: use an ordinary download link
       const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),5000);
       note.textContent="賀卡圖片已下載。";
     } else if(downloadsApi){
@@ -132,3 +142,18 @@ render(false);
 Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖誕元旦春宵母親端午父中秋福壽安康團圓添歲平喜樂新禧三羊開泰花好月慈恩永念如山金獻瑞家紫燕迎戶歡元宵樂2027"),
   document.fonts.load(`34px "Noto Serif TC"`,"親愛的"),document.fonts.load(`600 34px "Noto Serif TC"`,"親愛的")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
+
+// App install (PWA). Only on the real website: the artifact frame has no service worker or install.
+if(!window.claude&&"serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
+  addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(e=>console.warn("sw",e)));
+  const installed=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
+  const box=$("installBox"),btn=$("installBtn"),note=$("installNote");
+  let promptEvt=null;
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();promptEvt=e;box.hidden=false;btn.hidden=false;
+    note.textContent="裝好後會出現在桌面，沒有網路也能做賀卡。"});
+  btn.addEventListener("click",async()=>{if(!promptEvt)return;promptEvt.prompt();
+    const r=await promptEvt.userChoice;promptEvt=null;btn.hidden=true;
+    note.textContent=r.outcome==="accepted"?"已安裝，可以從桌面的「賀卡坊」打開。":"之後想安裝，可以從瀏覽器選單選「加到主畫面」。"});
+  addEventListener("appinstalled",()=>{btn.hidden=true;note.textContent="已安裝，可以從桌面的「賀卡坊」打開。"});
+  if(isIOS&&!installed){box.hidden=false;note.textContent="想裝成 App：用 Safari 打開，按下方「分享」鈕，再選「加入主畫面」。"}
+}
