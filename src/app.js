@@ -99,10 +99,14 @@ const phone=matchMedia("(pointer:coarse)").matches;
 if(!window.claude&&phone)$("dl").textContent="儲存／分享賀卡";
 // Viewers who only have the share link are not granted the download capability and the frame blocks
 // download links, so they get the card as a plain image to save with a long press or right click.
-function showImage(blob){
+const SAVE_TIP="手機請長按圖片，選「儲存圖片」；電腦請在圖片上按右鍵，選「另存圖片」。";
+// tip: what to do with the picture; lineHref: optional link that sends the greeting text through LINE
+function showImage(blob,tip,lineHref){
   if(lastUrl)URL.revokeObjectURL(lastUrl);
   lastUrl=URL.createObjectURL(blob);
   $("saveImg").src=lastUrl;$("saveImg").alt=`${year} ${cur.name}賀卡`;
+  $("saveTip").textContent=tip||SAVE_TIP;
+  const a=$("saveLine");a.hidden=!lineHref;if(lineHref)a.href=lineHref;
   $("saveBox").hidden=false;$("saveClose").focus();
 }
 function hideImage(){$("saveBox").hidden=true}
@@ -132,6 +136,40 @@ $("dl").addEventListener("click",async()=>{
     } else {showImage(blob);note.textContent="請長按（電腦按右鍵）圖片，選「儲存圖片」。"}
   }catch(e){console.error(e);note.textContent="產生圖片沒有成功，請改用截圖保存賀卡。"}
 });
+
+/* ---------- share to LINE / WeChat ---------- */
+// Websites cannot post a picture straight into LINE or WeChat. Phones get the system share sheet with the
+// card attached (LINE and WeChat both appear there); everywhere else the card pops up to be saved and sent by hand.
+const ua=navigator.userAgent, inWeChat=/MicroMessenger/i.test(ua), inLine=/\bLine\//.test(ua);
+const lineTextHref=()=>"https://line.me/R/share?text="+encodeURIComponent(cardText());
+async function shareTo(app){
+  const note=$("shareNote"), name=app==="line"?"LINE":"微信";
+  let blob,file;
+  try{
+    const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
+    blob=await new Promise(r=>c.toBlob(r,"image/png"));
+    file=typeof File==="function"?new File([blob],`${year}${cur.name}賀卡.png`,{type:"image/png"}):null;
+  }catch(e){console.error(e);note.textContent="產生圖片沒有成功，請改用截圖保存賀卡。";return}
+  if(phone&&file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    note.textContent=`在分享選單裡點「${name}」，再選要傳給誰。`+(app==="wx"?"沒看到微信的話，請把選單往右滑，點「更多」。":"");
+    try{await navigator.share({files:[file],title:`${year} ${cur.name}賀卡`});note.textContent="已分享，祝節日快樂！";return}
+    catch(e){if(e&&e.name==="AbortError"){note.textContent="已取消分享。";return}} // other errors: fall through to the picture
+  }
+  let tip;
+  if(app==="wx"&&inWeChat) tip="長按圖片，選「發送給朋友」。";
+  else if(app==="line"&&inLine) tip="長按圖片儲存，再到 LINE 聊天室按「＋」或相片圖示傳送。也可以用下面的按鈕傳祝賀文字。";
+  else if(phone&&app==="line") tip="長按圖片，選「儲存圖片」，再到 LINE 聊天室傳送這張照片。也可以用下面的按鈕傳祝賀文字。";
+  else if(phone) tip="長按圖片，選「儲存圖片」，再到微信聊天室按「＋」→「相冊」傳送。";
+  else tip=`在圖片上按右鍵，選「另存圖片」，再把圖片拖進${name}電腦版的聊天室。`;
+  showImage(blob,tip,app==="line"&&phone?lineTextHref():null);
+  note.textContent=`已打開賀卡圖片，照著圖片下方的說明傳到${name}。`;
+}
+if(!window.claude){ // the artifact frame blocks share sheets and outside links, so sharing is for the real website only
+  $("shareBox").hidden=false;
+  $("shareLine").addEventListener("click",()=>shareTo("line"));
+  $("shareWx").addEventListener("click",()=>shareTo("wx"));
+  if(inWeChat)$("shareNote").textContent="你正在微信裡，按「傳到微信」後長按圖片就能發送給朋友。";
+}
 if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").textContent="看圖並儲存"})();
 
 const def=pickDefault();year=def.y;cur=def.f;
