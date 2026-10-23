@@ -71,6 +71,8 @@ function buildChips(){
 }
 function render(anim){
   const c=$("card");drawCard(c);
+  // fetch the next landscape photo ahead of time so 換一張 shows it at once
+  const nx=cur.designs[(tplIdx+1)%cur.designs.length];if(nx.photo)photoImg(nx.photo);
   const o=occ(cur);$("dateNote").textContent=`日期自動帶入：${fmtDate(o.date)}，${o.gz}年 農曆${o.lunar}`;
   $("motifNote").textContent=`${cur.name}樣板 ${tplIdx%cur.designs.length+1}／${cur.designs.length}：${curDesign(cur).motif}`;
   document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===cur.id)));
@@ -99,6 +101,7 @@ const phone=matchMedia("(pointer:coarse)").matches;
 if(!window.claude&&phone)$("dl").textContent="儲存／分享賀卡";
 // Viewers who only have the share link are not granted the download capability and the frame blocks
 // download links, so they get the card as a plain image to save with a long press or right click.
+const PHOTO_MISSING="這張風景照還沒下載到，請連上網路後再試一次，或按「換一張」改用其他樣板。";
 const SAVE_TIP="手機請長按圖片，選「儲存圖片」；電腦請在圖片上按右鍵，選「另存圖片」。";
 // tip: what to do with the picture; lineHref: optional link that sends the greeting text through LINE
 function showImage(blob,tip,lineHref){
@@ -117,6 +120,7 @@ $("dl").addEventListener("click",async()=>{
   const note=$("copyNote");
   const standalone=!window.claude;
   try{
+    if(!await photoReady(curDesign(cur))){note.textContent=PHOTO_MISSING;return}
     const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
     const blob=await new Promise(r=>c.toBlob(r,"image/png"));
     const filename=`${year}${cur.name}賀卡.png`;
@@ -146,6 +150,7 @@ async function shareTo(app){
   const note=$("shareNote"), name=app==="line"?"LINE":"微信";
   let blob,file;
   try{
+    if(!await photoReady(curDesign(cur))){note.textContent=PHOTO_MISSING;return}
     const c=document.createElement("canvas");c.width=W;c.height=H;drawCard(c);
     blob=await new Promise(r=>c.toBlob(r,"image/png"));
     file=typeof File==="function"?new File([blob],`${year}${cur.name}賀卡.png`,{type:"image/png"}):null;

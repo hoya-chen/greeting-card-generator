@@ -80,3 +80,51 @@ function pine(x,f,cx,base,s){
   x.restore();
 }
 
+
+/* ---------- nature photo designs ---------- */
+// Photos live in bg/<festival>/NN.webp (sources and licences in bg/CREDITS.md). They are not inlined in
+// index.html: each loads the first time its design is shown, and the installed app keeps it for offline use.
+const BG_DIR = "bg/", PHOTOS = {};
+// loaded image or null; starts the download and redraws the card when it arrives
+function photoImg(src){
+  let p = PHOTOS[src];
+  if(!p){
+    const img = new Image();
+    p = PHOTOS[src] = {img, ok: null};
+    p.ready = new Promise(res => {
+      img.onload = () => { p.ok = true; res(true); if(cur && typeof render === "function" && curDesign(cur).photo === src) render(false); };
+      img.onerror = () => { p.ok = false; delete PHOTOS[src]; res(false); };
+    });
+    img.src = BG_DIR + src;
+  }
+  return p.ok ? p.img : null;
+}
+// wait until a design's photo is ready (before saving or sharing the card); true when there is nothing to wait for
+function photoReady(d){ if(!d || !d.photo) return Promise.resolve(true); photoImg(d.photo); return PHOTOS[d.photo] ? PHOTOS[d.photo].ready : Promise.resolve(false); }
+// A design whose art is a landscape photo. o: {photo, motif, phrase, colors, fx, fy}
+// fx / fy (0..1) pick which part of the photo stays in view when it is cropped to the card.
+function photoDesign(o){
+  return Object.assign({}, o, {draw(x, f){
+    const L = 44, T = 44, R = W - 44, B = 1000, w = R - L, h = B - T, img = photoImg(o.photo);
+    if(img){
+      const s = Math.max(w / img.naturalWidth, h / img.naturalHeight), dw = img.naturalWidth * s, dh = img.naturalHeight * s;
+      x.drawImage(img, L - (dw - w) * (o.fx ?? .5), T - (dh - h) * (o.fy ?? .5), dw, dh);
+    } else {
+      const g = x.createLinearGradient(0, T, 0, B); g.addColorStop(0, f.paper2); g.addColorStop(1, f.paper);
+      x.fillStyle = g; x.fillRect(L, T, w, h);
+      x.fillStyle = INK; x.globalAlpha = .7; x.font = `30px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillText("風景照載入中……", W / 2, 520); x.globalAlpha = 1;
+    }
+    // dark veil behind the title and date, and a fade into the card colour behind the phrase and message
+    let g = x.createLinearGradient(0, T, 0, 290); g.addColorStop(0, "rgba(0,0,0,.62)"); g.addColorStop(.5, "rgba(0,0,0,.3)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = g; x.fillRect(L, T, w, 246);
+    g = x.createLinearGradient(0, 700, 0, B); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.55, "rgba(0,0,0,.35)"); g.addColorStop(1, f.paper);
+    x.fillStyle = g; x.fillRect(L, 700, w, B - 700);
+    x.strokeStyle = f.gold; x.globalAlpha = .55; x.lineWidth = 2; x.beginPath(); x.moveTo(L, T + 1); x.lineTo(R, T + 1); x.stroke(); x.globalAlpha = 1;
+    return 905;
+  }});
+}
+// ten photo designs for one festival: list of [motif, phrase, extra options], photos bg/<id>/01.webp ... 10.webp
+function photoSet(id, list){
+  return list.map(([motif, phrase, o], i) => photoDesign(Object.assign({photo: `${id}/${String(i + 1).padStart(2, "0")}.webp`, motif: "風景照：" + motif, phrase}, o || {})));
+}
