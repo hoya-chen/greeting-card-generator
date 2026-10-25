@@ -57,6 +57,10 @@ header.top p{margin:0;color:var(--muted)}
 .btn.line{background:#058c3c;border-color:#058c3c;color:#fff;font-weight:600}
 .btn.wx{background:#1b7a43;border-color:#1b7a43;color:#fff;font-weight:600}
 a.btn{text-decoration:none;display:inline-block}
+.site-bar{grid-column:1/-1;background:var(--chip-on);color:var(--chip-on-fg);border-radius:10px;padding:12px 14px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.site-bar p{margin:0;flex:1 1 240px}
+.site-bar a{color:inherit;font-weight:700;word-break:break-all}
+.site-bar .btn{background:var(--chip-on-fg);color:#a8231f;border-color:var(--chip-on-fg);font-weight:600}
 .save-box{position:fixed;inset:0;z-index:10;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px;overflow:auto}
 .save-box[hidden]{display:none}
 .save-panel{background:var(--panel);color:var(--fg);border-radius:10px;padding:16px;max-width:460px;width:100%;display:grid;gap:12px;justify-items:center}
@@ -76,6 +80,10 @@ a.btn{text-decoration:none;display:inline-block}
 <body>
 
 <div class="wrap">
+  <div class="site-bar" id="siteBar" hidden>
+    <p>這是預覽版。正式網站在 <a id="siteLink" href="https://greeting-card-generator.hoya-chen.workers.dev/" target="_blank" rel="noopener">greeting-card-generator.hoya-chen.workers.dev</a>，請用正式網址安裝到手機、分享給家人，才會有「賀卡坊」圖示和 LINE／微信分享。</p>
+    <button class="btn" id="siteCopy" type="button">複製正式網址</button>
+  </div>
   <header class="top">
     <h1>年節賀卡坊</h1>
     <p>給家中長輩的傳統喜氣賀卡，每個節日都有專屬樣板。</p>

@@ -2,7 +2,9 @@
 
 給家中長輩的傳統喜氣賀卡產生器。單一 HTML 檔，不需要安裝或建置，用瀏覽器打開 `index.html` 就能使用。
 
-也可以裝成手機 App（PWA），網站放在 Cloudflare Pages（設定方式見下方「部署」）。
+**正式網址：<https://greeting-card-generator.hoya-chen.workers.dev/>**
+
+請用這個網址打開、裝到手機、分享給家人。網站放在 Cloudflare Workers（見下方「部署」），也可以裝成手機 App（PWA）。Claude 的 artifact 連結只是預覽版，從那裡安裝不會有「賀卡坊」圖示，頁面頂端也會提示改用正式網址。
 
 ## 裝到手機
 
@@ -68,12 +70,8 @@
 - `docs/`：樣板預覽圖。
 - `manifest.webmanifest`、`sw.js`、`icons/`：App 安裝設定、離線快取與圖示。改了 `index.html` 之後，把 `sw.js` 裡的 `VERSION` 加一，已安裝的手機才會更新。圖示由 `tools/icons.js` 產生（需要 Playwright）。
 
-## 部署（Cloudflare Pages）
+## 部署（Cloudflare Workers）
 
-純靜態網頁，不需要建置。一次性設定：
+網站是 Cloudflare Worker，已連到這個 repo 的 `main` 分支，網址是 <https://greeting-card-generator.hoya-chen.workers.dev/>。純靜態網頁，不需要建置；每次合併到 `main` 都會自動更新網站。
 
-1. Cloudflare 後台 → Workers & Pages → Create → Pages → Connect to Git，選這個 repo、分支 `main`。
-2. Framework 選 None，Build command 留空，Build output directory 填 `/`。
-3. 按 Deploy，網址會是 `<專案名稱>.pages.dev`，也可以綁定自己的網域。
-
-之後每次合併到 `main` 都會自動更新網站。
+要重新設定時：Cloudflare 後台 → Workers & Pages → Create → 匯入 Git repo，選這個 repo、分支 `main`，Build command 留空，輸出目錄 `/`。
