@@ -175,6 +175,13 @@ if(!window.claude){ // the artifact frame blocks share sheets and outside links,
   $("shareWx").addEventListener("click",()=>shareTo("wx"));
   if(inWeChat)$("shareNote").textContent="你正在微信裡，按「傳到微信」後長按圖片就能發送給朋友。";
 }
+// In the Claude artifact, point people to the real website (install icon, sharing and offline only work there).
+const SITE_URL="https://greeting-card-generator.hoya-chen.workers.dev/";
+if(window.claude){
+  $("siteBar").hidden=false;
+  $("siteCopy").addEventListener("click",()=>{const b=$("siteCopy");
+    navigator.clipboard.writeText(SITE_URL).then(()=>{b.textContent="已複製，貼到瀏覽器打開"},()=>{b.textContent="請長按上面的網址複製"})});
+}
 if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").textContent="看圖並儲存"})();
 
 const def=pickDefault();year=def.y;cur=def.f;
