@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600&display=swap">
 <style>
-/* Layout: controls column on the left, the card (one canvas, also the download) on the right; stacks card-first on phones. */
+/* Layout: one column on every screen. Settings on top, the card (one canvas, also the download) at the bottom. */
 :root{
   --bg:#f5efee; --fg:#2b1a1b; --muted:#7a5f60; --line:#e2d3d2; --panel:#fffaf9;
   --chip:#efe2e1; --chip-on:#a8231f; --chip-on-fg:#fff6e6; --focus:#c8902c;
@@ -32,7 +32,7 @@
   --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
-.wrap{max-width:1080px;margin:0 auto;padding-inline:16px;padding-block:max(28px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);gap:32px;align-items:start}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(28px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
 header.top{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
 header.top h1{font-family:var(--display);font-weight:700;font-size:40px;margin:0;line-height:1.1}
 header.top p{margin:0;color:var(--muted)}
@@ -65,16 +65,11 @@ a.btn{text-decoration:none;display:inline-block}
 .install{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .install[hidden]{display:none}
 .motif{font-size:13px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
-.stage{min-width:0;display:grid;gap:14px;justify-items:center}
+.stage{min-width:0;display:grid;gap:14px;justify-items:center;border-top:1px solid var(--line);padding-top:28px}
 #card{width:100%;max-width:520px;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 18px 40px -18px rgba(60,10,10,.55);display:block}
 @media (prefers-reduced-motion:no-preference){
   #card.flip{animation:pop .45s ease-out}
   @keyframes pop{from{transform:scale(.97);opacity:.6}to{transform:none;opacity:1}}
-}
-@media (max-width:760px){
-  .wrap{grid-template-columns:minmax(0,1fr)}
-  .stage{order:-1}
-  header.top{order:-2}
 }
 </style>
 </head>
@@ -124,7 +119,7 @@ a.btn{text-decoration:none;display:inline-block}
         <button class="btn" id="copy" type="button">複製祝賀文字</button>
         <button class="btn primary" id="dl" type="button">下載賀卡圖片</button>
       </div>
-      <p class="hint" id="copyNote">每個節日有 10 張圖、20 句吉祥話可換。下載的 PNG 和右邊預覽一模一樣。</p>
+      <p class="hint" id="copyNote">每個節日有 10 張圖、20 句吉祥話可換。下載的 PNG 和下方預覽一模一樣。</p>
     </div>
 
     <div class="group" id="shareBox" hidden>
