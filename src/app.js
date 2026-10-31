@@ -13,7 +13,7 @@ function wrapLines(x,text,maxW,indentPx){
 }
 function recipient(){const v=$("toSel").value;return v==="__custom"?$("toCustom").value.trim():v}
 function sender(){const v=$("fromSel").value;return v==="__custom"?$("fromIn").value.trim():v}
-function curDesign(f){return f.designs[tplIdx%f.designs.length]}
+function curDesign(f){const l=designsOf(f);return l[tplIdx%l.length]}
 function curPhrase(){const d=curDesign(cur);return phraseOf(Object.assign({},cur,d.phrase?{phrase:d.phrase}:{}))}
 function drawCard(c){
   const d0=curDesign(cur);
@@ -70,21 +70,27 @@ function buildYears(){
   const sel=$("yearSel");YEARS.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=`${y} ${ZOD[(y-4)%12]}年`;o.title=`${y} 年（${ganzhi(y)}・${ZOD[(y-4)%12]}年）`;sel.appendChild(o)});
   sel.addEventListener("change",()=>{year=Number(sel.value);buildFestOptions();render(true)});
 }
-// festivals as one dropdown, in date order, each with its date ("冬至 12/22")
+let cat="cn";
+// festivals of the chosen group (中國／西洋), in date order for the chosen year
+function festsOf(c){return FESTS.filter(f=>f.cat===c).sort((a,b)=>TABLE[year][a.id][0]<TABLE[year][b.id][0]?-1:1)}
+// festivals as one dropdown, each with its date ("冬至 12/22")
 function buildFestOptions(){
   const sel=$("festSel");sel.textContent="";
-  [...FESTS].sort((a,b)=>TABLE[year][a.id][0]<TABLE[year][b.id][0]?-1:1).forEach(f=>{
+  festsOf(cat).forEach(f=>{
     const o=document.createElement("option");o.value=f.id;
     const [,m,d]=TABLE[year][f.id][0].split("-").map(Number);o.textContent=`${f.name} ${m}/${d}`;sel.appendChild(o)});
-  if(cur)sel.value=cur.id;
+  if(cur&&cur.cat===cat)sel.value=cur.id;
 }
 $("festSel").addEventListener("change",e=>select(e.target.value));
 function render(anim){
   const c=$("card");drawCard(c);
   // fetch the next landscape photo ahead of time so 換一張 shows it at once
-  const nx=cur.designs[(tplIdx+1)%cur.designs.length];if(nx.photo)photoImg(nx.photo);
+  const list=designsOf(cur),nx=list[(tplIdx+1)%list.length];if(nx.photo)photoImg(nx.photo);
   const o=occ(cur);$("dateNote").textContent=`日期自動帶入：${fmtDate(o.date)}，${o.gz}年 農曆${o.lunar}`;
-  $("motifNote").textContent=`${cur.name}樣板 ${tplIdx%cur.designs.length+1}／${cur.designs.length}：${curDesign(cur).motif}`;
+  $("motifNote").textContent=`${cur.name}${STYLES[styleOf(curDesign(cur))]}圖 ${tplIdx%list.length+1}／${list.length}：${curDesign(cur).motif}`;
+  document.querySelectorAll("#catSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.cat===cat)));
+  document.querySelectorAll("#styleSeg button").forEach(b=>{const n=cur.designs.filter(d=>styleOf(d)===b.dataset.style).length;
+    b.setAttribute("aria-label",`${STYLES[b.dataset.style]}圖（${n}張）`);b.setAttribute("aria-pressed",String(b.dataset.style===artStyle))});
   $("festSel").value=cur.id;
   if(anim){c.classList.remove("flip");void c.offsetWidth;c.classList.add("flip")}
 }
@@ -134,6 +140,14 @@ $("menuSave").addEventListener("click",()=>{menus=readMenus();store.set("menus",
 applyMenus();
 $("shuffle").addEventListener("click",()=>{msgIdx++;render(false)});
 $("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
+// 中國節日／西洋節日: show only that group, and pick its next festival from today
+$("catSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.cat===cat)return;
+  cat=b.dataset.cat;const l=festsOf(cat);cur=l.find(f=>dayDiff(TABLE[year][f.id][0])>=0)||l[0];msgIdx=0;tplIdx=0;
+  $("nextNote").textContent="";buildFestOptions();render(true)});
+// 卡通／風景／傳統, remembered on this phone
+$("styleSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.style===artStyle)return;
+  artStyle=b.dataset.style;store.set("style",artStyle);tplIdx=0;render(true)});
+if(STYLES[store.get("style")])artStyle=store.get("style");
 $("copy").addEventListener("click",()=>{
   const text=cardText(),note=$("copyNote");
   navigator.clipboard.writeText(text).then(()=>{note.textContent="已複製，可以貼到 LINE 或訊息裡。"},
@@ -229,7 +243,7 @@ if(window.claude){
 }
 if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)dlLabel("看圖","看賀卡圖片並儲存")})();
 
-const def=pickDefault();year=def.y;cur=def.f;
+const def=pickDefault();year=def.y;cur=def.f;cat=cur.cat;
 buildYears();$("yearSel").value=String(year);buildFestOptions();
 if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`:`最近的節日是 ${year} 年${cur.name}，還有 ${def.d} 天，已幫你選好。`;
 render(false);

@@ -35,11 +35,11 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:20px;line-height:1.6}
-.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(10px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(10px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
 /* compact top: title + gear, then four dropdowns in two rows, so the card shows at first glance on a phone */
 header.top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
 header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0;line-height:1.1}
-.gear{appearance:none;font:inherit;font-size:16px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;min-height:52px;padding:6px 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.gear{appearance:none;font:inherit;font-size:16px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;min-height:48px;padding:4px 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .gear svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2}
 .gear[aria-expanded="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 .controls{display:grid;gap:10px;min-width:0}
@@ -58,6 +58,16 @@ header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0
 .chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 .chip[aria-pressed="true"] small{color:var(--chip-on-fg);opacity:.8}
 .chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* big two- or three-way switch (節日類別, 圖案風格) */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:2px solid var(--chip-on);border-radius:12px;overflow:hidden}
+.seg button{appearance:none;border:0;border-left:2px solid var(--chip-on);background:var(--panel);color:var(--fg);font:inherit;font-size:22px;font-weight:700;min-height:60px;padding:8px 6px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button small{font-size:16px;font-weight:400;opacity:.8;margin-left:4px}
+.seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
+/* 中國／西洋 and 卡通／風景／傳統 share one compact row above the dropdowns */
+.segrow{display:grid;grid-template-columns:2fr 3fr;gap:10px}
+.segrow .seg button{font-size:20px;min-height:50px;padding:4px 2px}
+@media (max-width:380px){.pick select{font-size:18px;padding-left:10px;padding-right:24px;background-position:right 13px top 50%,right 7px top 50%}}
 .field{display:grid;gap:6px}
 .field input,.field select{font:inherit;font-size:20px;min-height:56px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -131,6 +141,17 @@ a.btn{text-decoration:none;display:inline-block}
       <div class="actions"><button class="btn primary" id="menuSave" type="button">儲存選單</button><button class="btn" id="menuClose" type="button">關閉</button></div>
       <p class="hint" id="menuNote"></p>
     </details>
+    <div class="segrow">
+      <div class="seg" id="catSeg" role="group" aria-label="節日類別">
+        <button type="button" data-cat="cn" aria-label="中國節日">中國</button>
+        <button type="button" data-cat="west" aria-label="西洋節日">西洋</button>
+      </div>
+      <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
+        <button type="button" data-style="cartoon">卡通</button>
+        <button type="button" data-style="scenery">風景</button>
+        <button type="button" data-style="traditional">傳統</button>
+      </div>
+    </div>
     <div class="grid2">
       <div class="pick"><label for="festSel">節日</label><select id="festSel"></select></div>
       <div class="pick"><label for="yearSel">年份</label><select id="yearSel"></select></div>

@@ -35,11 +35,11 @@
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:20px;line-height:1.6}
-.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(10px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:12px;align-items:start}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(10px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
 /* compact top: title + gear, then four dropdowns in two rows, so the card shows at first glance on a phone */
 header.top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
 header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0;line-height:1.1}
-.gear{appearance:none;font:inherit;font-size:16px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;min-height:52px;padding:6px 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.gear{appearance:none;font:inherit;font-size:16px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;min-height:48px;padding:4px 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
 .gear svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2}
 .gear[aria-expanded="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 .controls{display:grid;gap:10px;min-width:0}
@@ -58,6 +58,16 @@ header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0
 .chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 .chip[aria-pressed="true"] small{color:var(--chip-on-fg);opacity:.8}
 .chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* big two- or three-way switch (節日類別, 圖案風格) */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:2px solid var(--chip-on);border-radius:12px;overflow:hidden}
+.seg button{appearance:none;border:0;border-left:2px solid var(--chip-on);background:var(--panel);color:var(--fg);font:inherit;font-size:22px;font-weight:700;min-height:60px;padding:8px 6px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button small{font-size:16px;font-weight:400;opacity:.8;margin-left:4px}
+.seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
+/* 中國／西洋 and 卡通／風景／傳統 share one compact row above the dropdowns */
+.segrow{display:grid;grid-template-columns:2fr 3fr;gap:10px}
+.segrow .seg button{font-size:20px;min-height:50px;padding:4px 2px}
+@media (max-width:380px){.pick select{font-size:18px;padding-left:10px;padding-right:24px;background-position:right 13px top 50%,right 7px top 50%}}
 .field{display:grid;gap:6px}
 .field input,.field select{font:inherit;font-size:20px;min-height:56px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -131,6 +141,17 @@ a.btn{text-decoration:none;display:inline-block}
       <div class="actions"><button class="btn primary" id="menuSave" type="button">儲存選單</button><button class="btn" id="menuClose" type="button">關閉</button></div>
       <p class="hint" id="menuNote"></p>
     </details>
+    <div class="segrow">
+      <div class="seg" id="catSeg" role="group" aria-label="節日類別">
+        <button type="button" data-cat="cn" aria-label="中國節日">中國</button>
+        <button type="button" data-cat="west" aria-label="西洋節日">西洋</button>
+      </div>
+      <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
+        <button type="button" data-style="cartoon">卡通</button>
+        <button type="button" data-style="scenery">風景</button>
+        <button type="button" data-style="traditional">傳統</button>
+      </div>
+    </div>
     <div class="grid2">
       <div class="pick"><label for="festSel">節日</label><select id="festSel"></select></div>
       <div class="pick"><label for="yearSel">年份</label><select id="yearSel"></select></div>
@@ -188,7 +209,14 @@ a.btn{text-decoration:none;display:inline-block}
 <script>
 const INK = "#fff3dc";
 const FESTS = [];
-function registerFest(def){FESTS.push(def)}
+// festival group shown by the 中國節日／西洋節日 buttons
+const WEST = ["newyear","valentine","easter","mother","father","halloween","thanksgiving","xmas"];
+function registerFest(def){def.cat=WEST.includes(def.id)?"west":"cn";FESTS.push(def)}
+// picture styles: each design is 卡通 (cartoon: true), 風景 (a photo) or 傳統 (the drawn red-and-gold ones)
+const STYLES = {cartoon:"卡通", scenery:"風景", traditional:"傳統"};
+let artStyle = "traditional"; // "all" shows every design (used by tools/preview.js)
+function styleOf(d){return d.cartoon?"cartoon":d.photo?"scenery":"traditional"}
+function designsOf(f){if(artStyle==="all")return f.designs;const l=f.designs.filter(d=>styleOf(d)===artStyle);return l.length?l:f.designs}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
 // 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use TW-Kai (全字庫正楷體, fonts/), then LXGW WenKai TC
@@ -201,13 +229,13 @@ function cnNum(n){if(n<=10)return n===10?"十":CN[n];const t=Math.floor(n/10),u=
 function fmtDate(iso){const [y,m,d]=iso.split("-").map(Number);return `${String(y).split("").map(c=>CN[c]).join("")}年${cnNum(m)}月${cnNum(d)}日`}
 // [國曆日期, 農曆日期] per year and festival. Lunar festivals are checked against published tables
 // (春節 2027-02-06 and 2030-02-03 follow the official calendars); other lunar dates come from the Chinese calendar.
-const TABLE = {"2026":{"chongyang":["2026-10-18","九月初九"],"spring":["2026-02-17","正月初一"],"yuanxiao":["2026-03-03","正月十五"],"duanwu":["2026-06-19","五月初五"],"midautumn":["2026-09-25","八月十五"],"dongzhi":["2026-12-22","冬月十四"],"xmas":["2026-12-25","冬月十七"],"newyear":["2026-01-01","冬月十三"],"mother":["2026-05-10","三月廿四"],"father":["2026-08-08","六月廿六"]},"2027":{"chongyang":["2027-10-08","九月初九"],"spring":["2027-02-06","正月初一"],"yuanxiao":["2027-02-20","正月十五"],"duanwu":["2027-06-09","五月初五"],"midautumn":["2027-09-15","八月十五"],"dongzhi":["2027-12-22","冬月廿五"],"xmas":["2027-12-25","冬月廿八"],"newyear":["2027-01-01","冬月廿四"],"mother":["2027-05-09","四月初四"],"father":["2027-08-08","七月初七"]},"2028":{"chongyang":["2028-10-26","九月初九"],"spring":["2028-01-26","正月初一"],"yuanxiao":["2028-02-09","正月十五"],"duanwu":["2028-05-28","五月初五"],"midautumn":["2028-10-03","八月十五"],"dongzhi":["2028-12-21","冬月初六"],"xmas":["2028-12-25","冬月初十"],"newyear":["2028-01-01","臘月初五"],"mother":["2028-05-14","四月二十"],"father":["2028-08-08","六月十八"]},"2029":{"chongyang":["2029-10-16","九月初九"],"spring":["2029-02-13","正月初一"],"yuanxiao":["2029-02-27","正月十五"],"duanwu":["2029-06-16","五月初五"],"midautumn":["2029-09-22","八月十五"],"dongzhi":["2029-12-21","冬月十七"],"xmas":["2029-12-25","冬月廿一"],"newyear":["2029-01-01","冬月十七"],"mother":["2029-05-13","四月初一"],"father":["2029-08-08","六月廿九"]},"2030":{"chongyang":["2030-10-05","九月初九"],"spring":["2030-02-03","正月初一"],"yuanxiao":["2030-02-17","正月十五"],"duanwu":["2030-06-05","五月初五"],"midautumn":["2030-09-12","八月十五"],"dongzhi":["2030-12-22","冬月廿八"],"xmas":["2030-12-25","臘月初一"],"newyear":["2030-01-01","冬月廿八"],"mother":["2030-05-12","四月十一"],"father":["2030-08-08","七月初十"]},"2031":{"chongyang":["2031-10-24","九月初九"],"spring":["2031-01-23","正月初一"],"yuanxiao":["2031-02-06","正月十五"],"duanwu":["2031-06-24","五月初五"],"midautumn":["2031-10-01","八月十五"],"dongzhi":["2031-12-22","冬月初九"],"xmas":["2031-12-25","冬月十二"],"newyear":["2031-01-01","臘月初八"],"mother":["2031-05-11","閏三月二十"],"father":["2031-08-08","六月廿一"]},"2032":{"chongyang":["2032-10-12","九月初九"],"spring":["2032-02-11","正月初一"],"yuanxiao":["2032-02-25","正月十五"],"duanwu":["2032-06-12","五月初五"],"midautumn":["2032-09-19","八月十五"],"dongzhi":["2032-12-21","冬月十九"],"xmas":["2032-12-25","冬月廿三"],"newyear":["2032-01-01","冬月十九"],"mother":["2032-05-09","四月初一"],"father":["2032-08-08","七月初三"]},"2033":{"chongyang":["2033-10-01","九月初九"],"spring":["2033-01-31","正月初一"],"yuanxiao":["2033-02-14","正月十五"],"duanwu":["2033-06-01","五月初五"],"midautumn":["2033-09-08","八月十五"],"dongzhi":["2033-12-21","冬月三十"],"xmas":["2033-12-25","閏冬月初四"],"newyear":["2033-01-01","臘月初一"],"mother":["2033-05-08","四月初十"],"father":["2033-08-08","七月十四"]},"2034":{"chongyang":["2034-10-20","九月初九"],"spring":["2034-02-19","正月初一"],"yuanxiao":["2034-03-05","正月十五"],"duanwu":["2034-06-20","五月初五"],"midautumn":["2034-09-27","八月十五"],"dongzhi":["2034-12-22","冬月十二"],"xmas":["2034-12-25","冬月十五"],"newyear":["2034-01-01","閏冬月十一"],"mother":["2034-05-14","三月廿六"],"father":["2034-08-08","六月廿四"]},"2035":{"chongyang":["2035-10-09","九月初九"],"spring":["2035-02-08","正月初一"],"yuanxiao":["2035-02-22","正月十五"],"duanwu":["2035-06-10","五月初五"],"midautumn":["2035-09-16","八月十五"],"dongzhi":["2035-12-22","冬月廿三"],"xmas":["2035-12-25","冬月廿六"],"newyear":["2035-01-01","冬月廿二"],"mother":["2035-05-13","四月初六"],"father":["2035-08-08","七月初五"]},"2036":{"chongyang":["2036-10-27","九月初九"],"spring":["2036-01-28","正月初一"],"yuanxiao":["2036-02-11","正月十五"],"duanwu":["2036-05-30","五月初五"],"midautumn":["2036-10-04","八月十五"],"dongzhi":["2036-12-21","冬月初五"],"xmas":["2036-12-25","冬月初九"],"newyear":["2036-01-01","臘月初四"],"mother":["2036-05-11","四月十六"],"father":["2036-08-08","閏六月十七"]}};
+const TABLE = {"2026":{"chongyang":["2026-10-18","九月初九"],"spring":["2026-02-17","正月初一"],"yuanxiao":["2026-03-03","正月十五"],"duanwu":["2026-06-19","五月初五"],"midautumn":["2026-09-25","八月十五"],"dongzhi":["2026-12-22","冬月十四"],"xmas":["2026-12-25","冬月十七"],"newyear":["2026-01-01","冬月十三"],"mother":["2026-05-10","三月廿四"],"father":["2026-08-08","六月廿六"],"valentine":["2026-02-14","臘月廿七"],"easter":["2026-04-05","二月十八"],"halloween":["2026-10-31","九月廿二"],"thanksgiving":["2026-11-26","十月十八"]},"2027":{"chongyang":["2027-10-08","九月初九"],"spring":["2027-02-06","正月初一"],"yuanxiao":["2027-02-20","正月十五"],"duanwu":["2027-06-09","五月初五"],"midautumn":["2027-09-15","八月十五"],"dongzhi":["2027-12-22","冬月廿五"],"xmas":["2027-12-25","冬月廿八"],"newyear":["2027-01-01","冬月廿四"],"mother":["2027-05-09","四月初四"],"father":["2027-08-08","七月初七"],"valentine":["2027-02-14","正月初九"],"easter":["2027-03-28","二月廿一"],"halloween":["2027-10-31","十月初三"],"thanksgiving":["2027-11-25","十月廿八"]},"2028":{"chongyang":["2028-10-26","九月初九"],"spring":["2028-01-26","正月初一"],"yuanxiao":["2028-02-09","正月十五"],"duanwu":["2028-05-28","五月初五"],"midautumn":["2028-10-03","八月十五"],"dongzhi":["2028-12-21","冬月初六"],"xmas":["2028-12-25","冬月初十"],"newyear":["2028-01-01","臘月初五"],"mother":["2028-05-14","四月二十"],"father":["2028-08-08","六月十八"],"valentine":["2028-02-14","正月二十"],"easter":["2028-04-16","三月廿二"],"halloween":["2028-10-31","九月十四"],"thanksgiving":["2028-11-23","十月初八"]},"2029":{"chongyang":["2029-10-16","九月初九"],"spring":["2029-02-13","正月初一"],"yuanxiao":["2029-02-27","正月十五"],"duanwu":["2029-06-16","五月初五"],"midautumn":["2029-09-22","八月十五"],"dongzhi":["2029-12-21","冬月十七"],"xmas":["2029-12-25","冬月廿一"],"newyear":["2029-01-01","冬月十七"],"mother":["2029-05-13","四月初一"],"father":["2029-08-08","六月廿九"],"valentine":["2029-02-14","正月初二"],"easter":["2029-04-01","二月十八"],"halloween":["2029-10-31","九月廿四"],"thanksgiving":["2029-11-22","十月十七"]},"2030":{"chongyang":["2030-10-05","九月初九"],"spring":["2030-02-03","正月初一"],"yuanxiao":["2030-02-17","正月十五"],"duanwu":["2030-06-05","五月初五"],"midautumn":["2030-09-12","八月十五"],"dongzhi":["2030-12-22","冬月廿八"],"xmas":["2030-12-25","臘月初一"],"newyear":["2030-01-01","冬月廿八"],"mother":["2030-05-12","四月十一"],"father":["2030-08-08","七月初十"],"valentine":["2030-02-14","正月十二"],"easter":["2030-04-21","三月十九"],"halloween":["2030-10-31","十月初五"],"thanksgiving":["2030-11-28","冬月初四"]},"2031":{"chongyang":["2031-10-24","九月初九"],"spring":["2031-01-23","正月初一"],"yuanxiao":["2031-02-06","正月十五"],"duanwu":["2031-06-24","五月初五"],"midautumn":["2031-10-01","八月十五"],"dongzhi":["2031-12-22","冬月初九"],"xmas":["2031-12-25","冬月十二"],"newyear":["2031-01-01","臘月初八"],"mother":["2031-05-11","閏三月二十"],"father":["2031-08-08","六月廿一"],"valentine":["2031-02-14","正月廿三"],"easter":["2031-04-13","三月廿二"],"halloween":["2031-10-31","九月十六"],"thanksgiving":["2031-11-27","十月十三"]},"2032":{"chongyang":["2032-10-12","九月初九"],"spring":["2032-02-11","正月初一"],"yuanxiao":["2032-02-25","正月十五"],"duanwu":["2032-06-12","五月初五"],"midautumn":["2032-09-19","八月十五"],"dongzhi":["2032-12-21","冬月十九"],"xmas":["2032-12-25","冬月廿三"],"newyear":["2032-01-01","冬月十九"],"mother":["2032-05-09","四月初一"],"father":["2032-08-08","七月初三"],"valentine":["2032-02-14","正月初四"],"easter":["2032-03-28","二月十七"],"halloween":["2032-10-31","九月廿八"],"thanksgiving":["2032-11-25","十月廿三"]},"2033":{"chongyang":["2033-10-01","九月初九"],"spring":["2033-01-31","正月初一"],"yuanxiao":["2033-02-14","正月十五"],"duanwu":["2033-06-01","五月初五"],"midautumn":["2033-09-08","八月十五"],"dongzhi":["2033-12-21","冬月三十"],"xmas":["2033-12-25","閏冬月初四"],"newyear":["2033-01-01","臘月初一"],"mother":["2033-05-08","四月初十"],"father":["2033-08-08","七月十四"],"valentine":["2033-02-14","正月十五"],"easter":["2033-04-17","三月十八"],"halloween":["2033-10-31","十月初九"],"thanksgiving":["2033-11-24","冬月初三"]},"2034":{"chongyang":["2034-10-20","九月初九"],"spring":["2034-02-19","正月初一"],"yuanxiao":["2034-03-05","正月十五"],"duanwu":["2034-06-20","五月初五"],"midautumn":["2034-09-27","八月十五"],"dongzhi":["2034-12-22","冬月十二"],"xmas":["2034-12-25","冬月十五"],"newyear":["2034-01-01","閏冬月十一"],"mother":["2034-05-14","三月廿六"],"father":["2034-08-08","六月廿四"],"valentine":["2034-02-14","臘月廿六"],"easter":["2034-04-09","二月廿一"],"halloween":["2034-10-31","九月二十"],"thanksgiving":["2034-11-23","十月十三"]},"2035":{"chongyang":["2035-10-09","九月初九"],"spring":["2035-02-08","正月初一"],"yuanxiao":["2035-02-22","正月十五"],"duanwu":["2035-06-10","五月初五"],"midautumn":["2035-09-16","八月十五"],"dongzhi":["2035-12-22","冬月廿三"],"xmas":["2035-12-25","冬月廿六"],"newyear":["2035-01-01","冬月廿二"],"mother":["2035-05-13","四月初六"],"father":["2035-08-08","七月初五"],"valentine":["2035-02-14","正月初七"],"easter":["2035-03-25","二月十六"],"halloween":["2035-10-31","十月初一"],"thanksgiving":["2035-11-22","十月廿三"]},"2036":{"chongyang":["2036-10-27","九月初九"],"spring":["2036-01-28","正月初一"],"yuanxiao":["2036-02-11","正月十五"],"duanwu":["2036-05-30","五月初五"],"midautumn":["2036-10-04","八月十五"],"dongzhi":["2036-12-21","冬月初五"],"xmas":["2036-12-25","冬月初九"],"newyear":["2036-01-01","臘月初四"],"mother":["2036-05-11","四月十六"],"father":["2036-08-08","閏六月十七"],"valentine":["2036-02-14","正月十八"],"easter":["2036-04-13","三月十七"],"halloween":["2036-10-31","九月十三"],"thanksgiving":["2036-11-27","十月初十"]}};
 const YEARS = Object.keys(TABLE).map(Number);
 let year = YEARS[0];
 const STEM="甲乙丙丁戊己庚辛壬癸", BRANCH="子丑寅卯辰巳午未申酉戌亥", ZOD="鼠牛虎兔龍蛇馬羊猴雞狗豬";
 const ZPHRASE={子:"金鼠迎春",丑:"牛轉乾坤",寅:"虎虎生風",卯:"玉兔呈祥",辰:"龍騰盛世",巳:"金蛇獻瑞",午:"馬到成功",未:"三羊開泰",申:"金猴獻瑞",酉:"金雞報曉",戌:"旺年納福",亥:"金豬納福"};
-// 元旦 (Jan 1) is always before 春節, so it still belongs to the previous lunar year
-function lunarYear(f){return f.id==="newyear"?year-1:year}
+// a day before 春節 (元旦, sometimes 情人節) still belongs to the previous lunar year
+function lunarYear(f){return TABLE[year][f.id][0]<TABLE[year].spring[0]?year-1:year}
 function ganzhi(L){return STEM[(L-4)%10]+BRANCH[(L-4)%12]}
 function occ(f){const [date,lunar]=TABLE[year][f.id];const L=lunarYear(f),gz=ganzhi(L);return {date,lunar,gz,zodiac:ZOD[(L-4)%12],zphrase:ZPHRASE[gz[1]]}}
 function phraseOf(f){return fill(f.phrase,occ(f))}
@@ -596,6 +624,135 @@ Object.assign(LEGACY,{
     return 880;
   },
 });
+
+/* ---------- cartoon designs ---------- */
+// Cute, bright pictures with smiling faces and thick outlines. A cartoon design draws a pastel scene in the
+// picture area, then the same dark veil (behind the title) and fade (behind the phrase) as the photo designs.
+let OUT = "#3d2622";
+// draw cartoon shapes as gold line art (traditional designs): outline in f.gold, no faces
+function goldLine(f, fn){const o = OUT; OUT = f.gold; try{fn()} finally {OUT = o}}
+function ink(x, fill, lw){x.fillStyle = fill; x.fill(); x.lineWidth = lw || 6; x.strokeStyle = OUT; x.lineJoin = "round"; x.lineCap = "round"; x.stroke()}
+// rounded polygon path
+function rpoly(x, pts, r){const n = pts.length, a = pts[n-1], b = pts[0]; x.beginPath(); x.moveTo((a[0]+b[0])/2, (a[1]+b[1])/2);
+  for(let i = 0; i < n; i++){const p = pts[i], q = pts[(i+1)%n]; x.arcTo(p[0], p[1], q[0], q[1], r)} x.closePath()}
+// several circles drawn as one shape with a single outline: [[cx,cy,r],...]
+function union(x, cs, fill, lw){x.save(); x.lineWidth = (lw || 6) * 2; x.strokeStyle = OUT;
+  for(const [cx, cy, r] of cs){circle(x, cx, cy, r); x.stroke()} x.fillStyle = fill; for(const [cx, cy, r] of cs){circle(x, cx, cy, r); x.fill()} x.restore()}
+// smiling face; s is about half the face width. o: {happy: ^ ^ eyes, open: open mouth, blush: false}
+function face(x, cx, cy, s, o = {}){
+  x.save(); const ey = cy - s*.1, ex = s*.38; x.lineCap = "round";
+  if(o.happy){x.strokeStyle = OUT; x.lineWidth = Math.max(3, s*.09);
+    for(const k of [-1, 1]){x.beginPath(); x.arc(cx + k*ex, ey + s*.08, s*.13, Math.PI*1.1, Math.PI*1.9); x.stroke()}}
+  else for(const k of [-1, 1]){x.fillStyle = OUT; x.beginPath(); x.ellipse(cx + k*ex, ey, s*.1, s*.13, 0, 0, Math.PI*2); x.fill();
+    x.fillStyle = "#fff"; circle(x, cx + k*ex + s*.035, ey - s*.05, s*.04); x.fill()}
+  if(o.blush !== false){x.fillStyle = "rgba(255,105,120,.55)"; for(const k of [-1, 1]){x.beginPath(); x.ellipse(cx + k*s*.64, cy + s*.13, s*.15, s*.09, 0, 0, Math.PI*2); x.fill()}}
+  x.strokeStyle = OUT; x.lineWidth = Math.max(3, s*.08); x.beginPath();
+  if(o.open){x.fillStyle = "#c8333a"; x.moveTo(cx - s*.17, cy + s*.08); x.arc(cx, cy + s*.08, s*.17, Math.PI, 0, true); x.closePath(); x.fill(); x.stroke()}
+  else {x.arc(cx, cy + s*.06, s*.17, Math.PI*.15, Math.PI*.85); x.stroke()}
+  x.restore();
+}
+function sparkle4(x, cx, cy, s, fill){x.beginPath(); x.moveTo(cx, cy - s); x.quadraticCurveTo(cx, cy, cx + s, cy); x.quadraticCurveTo(cx, cy, cx, cy + s);
+  x.quadraticCurveTo(cx, cy, cx - s, cy); x.quadraticCurveTo(cx, cy, cx, cy - s); x.fillStyle = fill; x.fill()}
+const CT = {
+  ball(x, cx, cy, r, fill, fc){circle(x, cx, cy, r); ink(x, fill); if(fc !== false) face(x, cx, cy + r*.05, r*.7, fc || {})},
+  box(x, cx, cy, w, h, fill, fc){x.beginPath(); x.roundRect(cx - w/2, cy - h/2, w, h, Math.min(w, h)*.16); ink(x, fill); if(fc !== false) face(x, cx, cy + h*.1, Math.min(w, h)*.36, fc || {})},
+  tri(x, cx, cy, w, h, fill, fc){rpoly(x, [[cx, cy - h/2], [cx + w/2, cy + h/2], [cx - w/2, cy + h/2]], Math.min(w, h)*.14); ink(x, fill); if(fc !== false) face(x, cx, cy + h*.2, w*.22, fc || {})},
+  heart(x, cx, cy, s, fill, fc){x.beginPath(); x.moveTo(cx, cy + s*.9); x.bezierCurveTo(cx - s*1.5, cy, cx - s*.9, cy - s*1.15, cx, cy - s*.45);
+    x.bezierCurveTo(cx + s*.9, cy - s*1.15, cx + s*1.5, cy, cx, cy + s*.9); x.closePath(); ink(x, fill); if(fc !== false) face(x, cx, cy - s*.02, s*.5, fc || {})},
+  star(x, cx, cy, R, fill, fc){const p = []; for(let i = 0; i < 10; i++){const a = -Math.PI/2 + i*Math.PI/5, r = i%2 ? R*.5 : R; p.push([cx + Math.cos(a)*r, cy + Math.sin(a)*r])}
+    rpoly(x, p, R*.1); ink(x, fill); if(fc !== false) face(x, cx, cy + R*.08, R*.42, fc || {})},
+  // egg with zigzag and dot bands
+  egg(x, cx, cy, w, h, fill, bands, fc){
+    const path = () => {x.beginPath(); x.moveTo(cx, cy - h/2); x.bezierCurveTo(cx + w*.62, cy - h/2, cx + w*.55, cy + h/2, cx, cy + h/2); x.bezierCurveTo(cx - w*.55, cy + h/2, cx - w*.62, cy - h/2, cx, cy - h/2); x.closePath()};
+    path(); x.fillStyle = fill; x.fill();
+    x.save(); path(); x.clip();
+    (bands || []).forEach(([yy, col, kind], i) => {const y = cy + yy*h; x.fillStyle = col; x.strokeStyle = col; x.lineWidth = h*.035;
+      if(kind === "dots") for(let k = -3; k <= 3; k++){circle(x, cx + k*w*.17, y, h*.035); x.fill()}
+      else {x.beginPath(); for(let k = -6; k <= 6; k++) x.lineTo(cx + k*w*.09, y + (k%2 ? -1 : 1)*h*.035); x.stroke()}});
+    x.restore(); path(); x.fillStyle = "rgba(0,0,0,0)"; ink(x, "rgba(0,0,0,0)");
+    if(fc !== false) face(x, cx, cy + h*.05, w*.3, fc || {})},
+  pumpkin(x, cx, cy, r, fill, fc){
+    x.fillStyle = "#4f8a3a"; x.beginPath(); x.roundRect(cx - r*.09, cy - r*1.05, r*.18, r*.35, r*.06); ink(x, "#5b8c3a");
+    for(const [dx, w] of [[-.48, .55], [.48, .55], [0, .6]]){x.beginPath(); x.ellipse(cx + dx*r, cy, w*r, r*.82, 0, 0, Math.PI*2); ink(x, fill)}
+    if(fc !== false) face(x, cx, cy + r*.08, r*.5, fc || {})},
+  ghost(x, cx, cy, s, fill, fc){x.beginPath(); x.moveTo(cx - s, cy + s*.9); x.lineTo(cx - s, cy); x.arc(cx, cy, s, Math.PI, 0);
+    x.lineTo(cx + s, cy + s*.9); for(let i = 0; i < 4; i++){const x0 = cx + s - i*s/2; x.quadraticCurveTo(x0 - s/8, cy + s*1.15, x0 - s/4, cy + s*.95); x.quadraticCurveTo(x0 - s*3/8, cy + s*.75, x0 - s/2, cy + s*.9)}
+    x.closePath(); ink(x, fill || "#fbfbff"); if(fc !== false) face(x, cx, cy + s*.05, s*.55, fc || {})},
+  sun(x, cx, cy, r, fill, fc){x.save(); x.fillStyle = "#ffcc33"; for(let i = 0; i < 12; i++){const a = i*Math.PI/6; rpoly(x, [[cx + Math.cos(a - .13)*r*1.08, cy + Math.sin(a - .13)*r*1.08], [cx + Math.cos(a)*r*1.5, cy + Math.sin(a)*r*1.5], [cx + Math.cos(a + .13)*r*1.08, cy + Math.sin(a + .13)*r*1.08]], 6); ink(x, "#ffb52e", 5)}
+    x.restore(); CT.ball(x, cx, cy, r, fill || "#ffd84a", fc)},
+  cloud(x, cx, cy, s, fill){union(x, [[cx - s*.55, cy + s*.1, s*.42], [cx, cy - s*.15, s*.55], [cx + s*.55, cy + s*.1, s*.42], [cx, cy + s*.18, s*.45]], fill || "#fff", 5)},
+  flower(x, cx, cy, r, petal, center, fc, n){n = n || 6; for(let i = 0; i < n; i++){const a = i*2*Math.PI/n; circle(x, cx + Math.cos(a)*r*.72, cy + Math.sin(a)*r*.72, r*.48); ink(x, petal, 5)}
+    CT.ball(x, cx, cy, r*.55, center || "#ffd84a", fc === undefined ? false : fc)},
+  // chrysanthemum / carnation style: many thin petals
+  mum(x, cx, cy, r, petal, fc){for(let k = 0; k < 2; k++) for(let i = 0; i < 16; i++){const a = i*Math.PI/8 + k*Math.PI/16, rr = r*(k ? .7 : 1);
+      x.save(); x.translate(cx, cy); x.rotate(a); x.beginPath(); x.ellipse(rr*.55, 0, rr*.48, rr*.14, 0, 0, Math.PI*2); ink(x, petal, 4); x.restore()}
+    CT.ball(x, cx, cy, r*.36, "#ffb347", fc === undefined ? false : fc)},
+  leaf(x, cx, cy, len, ang, fill){x.save(); x.translate(cx, cy); x.rotate(ang); x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(len*.5, -len*.32, len, 0); x.quadraticCurveTo(len*.5, len*.32, 0, 0); ink(x, fill || "#6cc070", 5); x.restore()},
+  maple(x, cx, cy, s, fill, rot, fc){const P = [[0,-1],[.18,-.55],[.45,-.7],[.38,-.3],[.9,-.4],[.7,-.05],[.95,.15],[.45,.3],[.5,.55],[.08,.45],[0,.95],[-.08,.45],[-.5,.55],[-.45,.3],[-.95,.15],[-.7,-.05],[-.9,-.4],[-.38,-.3],[-.45,-.7],[-.18,-.55]];
+    x.save(); x.translate(cx, cy); x.rotate(rot || 0); rpoly(x, P.map(([a, b]) => [a*s, b*s]), s*.05); ink(x, fill, 5); if(fc) face(x, 0, s*.05, s*.32, fc); x.restore()},
+  lantern(x, cx, cy, s, fill, ch, fc){x.save(); x.strokeStyle = OUT; x.lineWidth = 4; x.beginPath(); x.moveTo(cx, cy - s*1.3); x.lineTo(cx, cy - s*.8); x.stroke();
+    x.beginPath(); x.roundRect(cx - s*.35, cy - s*.85, s*.7, s*.2, 6); ink(x, "#ffcf4a", 4); x.beginPath(); x.roundRect(cx - s*.35, cy + s*.65, s*.7, s*.2, 6); ink(x, "#ffcf4a", 4);
+    x.beginPath(); x.ellipse(cx, cy, s*.8, s*.72, 0, 0, Math.PI*2); ink(x, fill || "#ef4b3c");
+    x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = 3; x.beginPath(); x.ellipse(cx, cy, s*.4, s*.72, 0, 0, Math.PI*2); x.stroke();
+    for(let i = -2; i <= 2; i++){x.strokeStyle = "#ffcf4a"; x.lineWidth = 4; x.beginPath(); x.moveTo(cx + i*s*.08, cy + s*.85); x.lineTo(cx + i*s*.1, cy + s*1.2); x.stroke()}
+    if(ch){x.fillStyle = "#ffe08a"; x.font = `700 ${Math.round(s*.6)}px ${DISP}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText(ch, cx, cy + s*.04)}
+    else if(fc !== false) face(x, cx, cy + s*.05, s*.5, fc || {});
+    x.restore()},
+  gift(x, cx, cy, w, h, fill, rib, fc){CT.box(x, cx, cy, w, h, fill, false); x.fillStyle = rib; x.fillRect(cx - w*.08, cy - h/2 + 3, w*.16, h - 6);
+    x.beginPath(); x.roundRect(cx - w*.08, cy - h/2, w*.16, h, 4); x.lineWidth = 4; x.strokeStyle = OUT; x.stroke();
+    for(const k of [-1, 1]){x.beginPath(); x.ellipse(cx + k*w*.17, cy - h/2 - h*.1, w*.17, h*.12, k*.5, 0, Math.PI*2); ink(x, rib, 5)} CT.ball(x, cx, cy - h/2 - h*.06, w*.07, rib, false);
+    if(fc !== false) face(x, cx - w*.3, cy + h*.1, w*.14, fc || {})},
+  balloon(x, cx, cy, r, fill){x.strokeStyle = OUT; x.lineWidth = 3; x.beginPath(); x.moveTo(cx, cy + r*1.15); x.bezierCurveTo(cx - r*.3, cy + r*1.6, cx + r*.3, cy + r*2, cx, cy + r*2.6); x.stroke();
+    x.beginPath(); x.ellipse(cx, cy, r*.85, r, 0, 0, Math.PI*2); ink(x, fill, 5); x.fillStyle = "rgba(255,255,255,.6)"; x.beginPath(); x.ellipse(cx - r*.35, cy - r*.4, r*.14, r*.24, .5, 0, Math.PI*2); x.fill()},
+  candy(x, cx, cy, r, fill, rot){x.save(); x.translate(cx, cy); x.rotate(rot || 0); for(const k of [-1, 1]){rpoly(x, [[k*r*.8, 0], [k*r*1.6, -r*.6], [k*r*1.6, r*.6]], 6); ink(x, fill, 4)}
+    circle(x, 0, 0, r); ink(x, fill, 5); x.strokeStyle = "rgba(255,255,255,.7)"; x.lineWidth = r*.18; x.beginPath(); x.arc(0, 0, r*.55, -2.6, -1.2); x.stroke(); x.restore()},
+  bunny(x, cx, cy, s, fill, fc){for(const k of [-1, 1]){x.beginPath(); x.ellipse(cx + k*s*.4, cy - s*1.1, s*.24, s*.62, k*.15, 0, Math.PI*2); ink(x, fill); x.fillStyle = "#ffb6c8"; x.beginPath(); x.ellipse(cx + k*s*.4, cy - s*1.05, s*.11, s*.44, k*.15, 0, Math.PI*2); x.fill()}
+    CT.ball(x, cx, cy, s, fill, fc)},
+  bear(x, cx, cy, s, fill, fc){for(const k of [-1, 1]){circle(x, cx + k*s*.72, cy - s*.72, s*.32); ink(x, fill)} circle(x, cx, cy, s); ink(x, fill);
+    x.beginPath(); x.ellipse(cx, cy + s*.32, s*.38, s*.28, 0, 0, Math.PI*2); x.fillStyle = "rgba(255,240,220,.85)"; x.fill(); face(x, cx, cy + s*.05, s*.62, fc || {})},
+  cat(x, cx, cy, s, fill, fc){for(const k of [-1, 1]){rpoly(x, [[cx + k*s*.95, cy - s*1.05], [cx + k*s*.85, cy - s*.2], [cx + k*s*.2, cy - s*.75]], 8); ink(x, fill)}
+    CT.ball(x, cx, cy, s, fill, fc); x.strokeStyle = OUT; x.lineWidth = 3; for(const k of [-1, 1]) for(const d of [-.08, .08]){x.beginPath(); x.moveTo(cx + k*s*.55, cy + s*.15 + d*s); x.lineTo(cx + k*s*1.1, cy + s*.1 + d*s*2.2); x.stroke()}},
+  chick(x, cx, cy, s, fc){x.save(); x.strokeStyle = OUT; x.lineWidth = 5; for(const d of [-.15, 0, .15]){x.beginPath(); x.moveTo(cx, cy - s*.95); x.quadraticCurveTo(cx + d*s*2, cy - s*1.35, cx + d*s*2.4, cy - s*1.2); x.stroke()} x.restore();
+    CT.ball(x, cx, cy, s, "#ffe066", Object.assign({blush: true}, fc || {})); x.beginPath(); x.ellipse(cx + s*.95, cy + s*.15, s*.28, s*.18, -.4, 0, Math.PI*2); ink(x, "#ffd23f", 4);
+    rpoly(x, [[cx - s*.12, cy + s*.18], [cx + s*.12, cy + s*.18], [cx, cy + s*.36]], 4); ink(x, "#ff9f1c", 3)},
+  snowman(x, cx, cy, s, fc){CT.ball(x, cx, cy + s*1.15, s*1.2, "#ffffff", false); CT.ball(x, cx, cy, s*.85, "#ffffff", fc || {});
+    x.beginPath(); x.roundRect(cx - s*.8, cy + s*.6, s*1.6, s*.3, 10); ink(x, "#e64545", 5); x.beginPath(); x.roundRect(cx + s*.3, cy + s*.7, s*.3, s*.75, 8); ink(x, "#e64545", 5);
+    x.beginPath(); x.roundRect(cx - s*.75, cy - s*.85, s*1.5, s*.2, 6); ink(x, "#3b3f6b", 5); x.beginPath(); x.roundRect(cx - s*.5, cy - s*1.5, s, s*.7, 8); ink(x, "#3b3f6b", 5);
+    rpoly(x, [[cx, cy + s*.12], [cx + s*.45, cy + s*.2], [cx, cy + s*.28]], 4); ink(x, "#ff8c1a", 3);
+    for(const d of [.9, 1.25, 1.6]){x.fillStyle = OUT; circle(x, cx, cy + s*d, s*.08); x.fill()}},
+  xtree(x, cx, base, s, fc){x.beginPath(); x.roundRect(cx - s*.14, base - s*.3, s*.28, s*.3, 6); ink(x, "#8b5a2b", 5);
+    [[.25, 1.0], [.65, .8], [1.02, .6]].forEach(([y, w]) => CT.tri(x, cx, base - s*y - s*.25, s*w*1.2, s*.65, "#3fae5a", false));
+    CT.star(x, cx, base - s*1.55, s*.2, "#ffd84a", false); face(x, cx, base - s*.48, s*.26, fc || {});
+    ["#ff5a5a", "#5ab0ff", "#ffd84a", "#ff8fd0"].forEach((c, i) => {circle(x, cx + [-.42, .4, -.22, .25][i]*s, base - [.35, .4, .82, .95][i]*s, s*.07); ink(x, c, 3)})},
+  turkey(x, cx, cy, s, fc){const cols = ["#e8553a", "#f39c32", "#f7c948", "#8fbf4a", "#e8553a", "#f39c32", "#f7c948"];
+    cols.forEach((c, i) => {const a = Math.PI + (i + .5)*Math.PI/7; x.beginPath(); x.ellipse(cx + Math.cos(a)*s*1.05, cy + Math.sin(a)*s*1.05, s*.3, s*.62, a + Math.PI/2, 0, Math.PI*2); ink(x, c, 5)});
+    CT.ball(x, cx, cy + s*.15, s*.85, "#9b6136", false); CT.ball(x, cx, cy - s*.35, s*.5, "#b07444", fc || {});
+    rpoly(x, [[cx - s*.1, cy - s*.25], [cx + s*.1, cy - s*.25], [cx, cy - s*.08]], 3); ink(x, "#ffb12e", 3);
+    x.beginPath(); x.ellipse(cx + s*.12, cy - s*.05, s*.06, s*.13, 0, 0, Math.PI*2); ink(x, "#e8443a", 3)},
+  // a hill along the bottom of the picture
+  hill(x, y, fill, amp, seed){const r = rand(seed || 3); x.beginPath(); x.moveTo(30, 1000); x.lineTo(30, y); for(let px = 30; px <= 970; px += 188) x.quadraticCurveTo(px + 94, y - (amp || 40)*(.5 + r()), px + 188, y);
+    x.lineTo(970, 1000); x.closePath(); ink(x, fill, 5)},
+  confetti(x, seed, n, area, cols){const r = rand(seed); for(let i = 0; i < n; i++){const cx = area[0] + r()*(area[2] - area[0]), cy = area[1] + r()*(area[3] - area[1]), c = cols[i%cols.length];
+    x.save(); x.translate(cx, cy); x.rotate(r()*Math.PI); x.fillStyle = c; if(i%3) x.fillRect(-7, -4, 14, 8); else {circle(x, 0, 0, 6); x.fill()} x.restore()}},
+  sparkles(x, seed, n, area, col){const r = rand(seed); for(let i = 0; i < n; i++) sparkle4(x, area[0] + r()*(area[2] - area[0]), area[1] + r()*(area[3] - area[1]), 8 + r()*14, col || "#fff")},
+  dots(x, col, gap){x.save(); x.fillStyle = col; for(let y = 60; y < 1000; y += gap || 70) for(let xx = 60 + ((y/(gap || 70))%2)*(gap || 70)/2; xx < 960; xx += gap || 70){circle(x, xx, y, 7); x.fill()} x.restore()},
+  text(x, str, cx, cy, size, fill){x.save(); x.font = `700 ${size}px ${DISP}`; x.textAlign = "center"; x.textBaseline = "middle"; x.lineWidth = size*.16; x.strokeStyle = OUT; x.lineJoin = "round"; x.strokeText(str, cx, cy); x.fillStyle = fill || "#fff"; x.fillText(str, cx, cy); x.restore()},
+};
+// o: {motif, phrase, colors, sky: [top, bottom], scene(x, f)}
+function cartoonDesign(o){
+  return Object.assign({cartoon: true}, o, {draw(x, f){
+    const L = 44, T = 44, R = W - 44, B = 1000, w = R - L, h = B - T;
+    let g = x.createLinearGradient(0, T, 0, B); g.addColorStop(0, o.sky[0]); g.addColorStop(1, o.sky[1]); x.fillStyle = g; x.fillRect(L, T, w, h);
+    x.save(); o.scene(x, f); x.restore();
+    g = x.createLinearGradient(0, T, 0, 250); g.addColorStop(0, "rgba(0,0,0,.55)"); g.addColorStop(.6, "rgba(0,0,0,.22)"); g.addColorStop(1, "rgba(0,0,0,0)");
+    x.fillStyle = g; x.fillRect(L, T, w, 206);
+    g = x.createLinearGradient(0, 800, 0, B); g.addColorStop(0, "rgba(0,0,0,0)"); g.addColorStop(.45, "rgba(0,0,0,.5)"); g.addColorStop(1, f.paper);
+    x.fillStyle = g; x.fillRect(L, 800, w, B - 800);
+    return 915;
+  }});
+}
+// five cartoon designs for a festival, added when that festival is in the build: list of {motif, phrase, colors, sky, scene}
+function cartoonSet(id, list){const f = FESTS.find(f => f.id === id); if(f) f.designs.push(...list.map(cartoonDesign))}
 /* 重陽節 (chongyang). Owner of this file: the 重陽節 designer. Add designs and messages here only. */
 (() => {
   const rrect = (x,a,b,w,h,r) => {x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()};
@@ -1425,6 +1582,84 @@ FESTS.find(f => f.id === "duanwu").designs.push(...photoSet("duanwu", [
   ["森林中的兩段瀑布。", "福澤綿長"],
   ["雪山下的河谷。", "端陽吉祥"],
 ]));
+/* 復活節 (easter). Owner of this file: the 復活節 designer. Add designs and messages here only. */
+(() => {
+  const C = CT;
+  const lily = (x, f, cx, cy, s, rot) => {x.save(); x.translate(cx, cy); x.rotate(rot || 0);
+    for(const a of [-.7, 0, .7]){x.save(); x.rotate(a); x.beginPath(); x.moveTo(0, 0); x.quadraticCurveTo(-s*.35, -s*.6, 0, -s*1.1); x.quadraticCurveTo(s*.35, -s*.6, 0, 0); ink(x, "#fff6e6", 4); x.restore()}
+    x.strokeStyle = f.gold; x.lineWidth = 3; for(const a of [-.3, 0, .3]){x.beginPath(); x.moveTo(0, 0); x.lineTo(Math.sin(a)*s*.7, -Math.cos(a)*s*.7); x.stroke(); circle(x, Math.sin(a)*s*.7, -Math.cos(a)*s*.7, 6); x.fillStyle = f.gold; x.fill()}
+    x.restore()};
+  const bands = f => [[-.28, f.gold], [-.08, "#fff6e6", "dots"], [.12, f.gold], [.3, "#fff6e6", "dots"]];
+  // 1 one big jewelled egg between spring flowers
+  const bigEgg = (x, f) => {stars(x, f, 4, 50, [70, 200, 930, 860]); goldLine(f, () => {C.egg(x, 500, 560, 340, 450, "#7a2a8a", bands(f), false);
+    for(const k of [-1, 1]){C.flower(x, 500 + k*290, 760, 60, "#fff6e6", f.gold, false, 5); C.leaf(x, 500 + k*230, 820, 110, k < 0 ? -2.8 : -.3, "#3f7a3a")}}); return 890};
+  // 2 Easter lilies
+  const lilies = (x, f) => {stars(x, f, 6, 50, [70, 200, 930, 860]); x.strokeStyle = "#5a9a4a"; x.lineWidth = 8; x.beginPath(); x.moveTo(500, 820); x.lineTo(500, 380); x.moveTo(500, 600); x.quadraticCurveTo(380, 520, 320, 470); x.moveTo(500, 560); x.quadraticCurveTo(620, 480, 680, 430); x.stroke();
+    goldLine(f, () => {lily(x, f, 500, 380, 170); lily(x, f, 320, 470, 140, -.6); lily(x, f, 680, 430, 140, .6); C.leaf(x, 500, 760, 150, -2.6, "#3f7a3a"); C.leaf(x, 500, 720, 150, -.5, "#3f7a3a")}); return 890};
+  // 3 paper-cut rabbit under a gold moon
+  const rabbit = (x, f) => {stars(x, f, 8, 60, [70, 200, 930, 860]); x.fillStyle = f.gold; circle(x, 500, 500, 250); x.fill();
+    x.fillStyle = f.paper2; x.beginPath(); x.ellipse(520, 620, 170, 120, 0, 0, Math.PI*2); x.fill(); circle(x, 400, 500, 90); x.fill();
+    for(const a of [-.35, -.05]){x.save(); x.translate(400, 430); x.rotate(a); x.beginPath(); x.ellipse(0, -110, 34, 110, 0, 0, Math.PI*2); x.fill(); x.restore()} circle(x, 690, 600, 40); x.fill();
+    x.fillStyle = f.gold; circle(x, 370, 490, 12); x.fill(); return 890};
+  // 4 basket of three eggs
+  const basket = (x, f) => {stars(x, f, 10, 50, [70, 200, 930, 860]); goldLine(f, () => {x.lineWidth = 10; x.strokeStyle = f.gold; x.beginPath(); x.arc(500, 600, 260, Math.PI*1.08, Math.PI*1.92); x.stroke();
+    C.egg(x, 380, 560, 150, 200, "#2f6a8a", [[-.15, f.gold], [.15, "#fff6e6", "dots"]], false); C.egg(x, 620, 560, 150, 200, "#7a2a8a", [[-.15, "#fff6e6", "dots"], [.15, f.gold]], false); C.egg(x, 500, 520, 170, 230, "#b8302a", bands(f), false);
+    x.beginPath(); x.moveTo(220, 620); x.lineTo(780, 620); x.quadraticCurveTo(760, 830, 500, 830); x.quadraticCurveTo(240, 830, 220, 620); ink(x, f.paper2, 5);
+    x.strokeStyle = f.gold; x.lineWidth = 3; for(let i = 0; i < 4; i++){x.beginPath(); x.moveTo(240 + i*8, 670 + i*40); x.lineTo(760 - i*8, 670 + i*40); x.stroke()}}); return 890};
+  // 5 spring sunrise over hills with flowers
+  const sunrise = (x, f) => {x.save(); x.strokeStyle = f.gold; x.lineWidth = 4; x.globalAlpha = .6; for(let i = 0; i < 19; i++){const a = Math.PI + i*Math.PI/18; x.beginPath(); x.moveTo(500 + Math.cos(a)*190, 620 + Math.sin(a)*190); x.lineTo(500 + Math.cos(a)*300, 620 + Math.sin(a)*300); x.stroke()} x.restore();
+    x.fillStyle = f.gold; circle(x, 500, 620, 170); x.fill(); goldLine(f, () => {C.hill(x, 700, f.paper2, 60, 3); C.hill(x, 800, "#3f6a3a", 40, 6);
+      for(const [cx, cy] of [[180, 780], [330, 820], [670, 820], [820, 780]]) C.flower(x, cx, cy, 36, "#fff6e6", f.gold, false, 5)}); return 900};
+
+  registerFest({
+    id: "easter", name: "復活節", phrase: "春回大地",
+    paper: "#5a2a6e", paper2: "#33163f", gold: "#f2d27e",
+    // up to 56 characters each; exactly 20 required
+    msgs: [
+      "復活節快樂！春暖花開，願您身體健康、心情愉快，處處有好消息。",
+      "春天回來了，萬物重生。願您精神飽滿，日子充滿希望與喜樂。",
+      "彩蛋藏著驚喜，春天帶來希望。祝您復活節平安，福氣滿滿。",
+      "願春天的陽光照進您心裡，帶給您溫暖、健康與滿滿的笑容。",
+      "復活節到了，祝您像春花一樣綻放，像小雞一樣活力十足。",
+      "新生的季節，願您煩惱全消，健康長壽，天天都有好心情。",
+      "願您在這美好的春日，和家人一起踏青賞花，共享天倫之樂。",
+      "祝您復活節快樂！平安是福，健康是寶，願您兩樣都擁有。",
+      "春風吹來好運氣，彩蛋裝滿小幸福。祝您萬事如意。",
+      "願這個春天帶給您新的希望、新的力氣，一切都順順利利。",
+      "百花盛開的季節，祝您身強體健、笑口常開，闔家平安。",
+      "復活節的祝福送給您：願您天天被愛包圍，日日有喜事。",
+      "像兔子一樣蹦蹦跳跳，像花兒一樣開開心心。復活節快樂！",
+      "願春天的每一朵花，都為您帶來一份健康與快樂。",
+      "祝您復活節平安喜樂，生活像彩蛋一樣多彩繽紛。",
+      "新的季節，新的開始。願您身體越來越好，心情越來越美。",
+      "謝謝您一直以來的照顧。復活節快樂，祝您福壽安康。",
+      "願春光明媚照您家，平安健康伴您身，快樂幸福滿心頭。",
+      "大地回春，生機無限。祝您精神飽滿，諸事順遂。",
+      "復活節快樂！願您收到滿籃的彩蛋，也收到滿滿的祝福。",
+    ],
+    designs: [
+      {motif: "一顆鑲著金色花紋的紫色大彩蛋，兩旁白花綻放。", draw: bigEgg},
+      {motif: "三朵潔白的復活節百合，金色花蕊，綠葉相襯。", phrase: "純潔希望", draw: lilies},
+      {motif: "金色圓月裡一隻剪紙兔子的剪影。", phrase: "玉兔迎春", draw: rabbit},
+      {motif: "草編籃子裡放著三顆金紋彩蛋。", phrase: "好運滿籃", draw: basket},
+      {motif: "春日旭日從山丘升起，山坡上開滿白花。", phrase: "新生希望", draw: sunrise},
+    ],
+  });
+})();
+
+/* 自然風景照樣板：照片在 bg/easter/，來源與授權見 bg/CREDITS.md */
+FESTS.find(f => f.id === "easter").designs.push(...photoSet("easter", [
+  ["盛開的紫丁香。", "春回大地"],
+  ["藍天下的櫻花。", "春暖花開"],
+  ["春天的雛菊花海。", "生機盎然"],
+  ["一片黃水仙。", "新生希望"],
+  ["山坡上的水仙花。", "喜氣洋洋"],
+  ["黃色鬱金香與紫色小花的花園。", "春光明媚"],
+  ["荷蘭田野上的鬱金香。", "花開富貴"],
+  ["藍天下開滿粉紅花的樹。", "好運滿滿"],
+  ["綠草如茵的山谷與溪流。", "平安喜樂"],
+  ["林間的藍鈴花海。", "復活節快樂"],
+]));
 /* 父親節 (father). Owner of this file: the 父親節 designer. Add designs and messages here only. */
 (() => {
   // fan of pine needles
@@ -1684,6 +1919,88 @@ FESTS.find(f => f.id === "father").designs.push(...photoSet("father", [
   ["參天的紅杉。", "松柏長青"],
   ["雪白的山峰。", "穩如泰山"],
   ["峽谷中的花崗岩峭壁。", "感恩有您"],
+]));
+/* 萬聖節 (halloween). Owner of this file: the 萬聖節 designer. Add designs and messages here only. */
+(() => {
+  const C = CT;
+  const batS = (x, f, cx, cy, s) => {x.save(); x.fillStyle = f.paper2; x.strokeStyle = f.gold; x.lineWidth = 2; x.beginPath(); x.moveTo(cx, cy - s*.2); x.quadraticCurveTo(cx - s*.6, cy - s*.7, cx - s*1.3, cy - s*.3);
+    x.quadraticCurveTo(cx - s*.9, cy - s*.1, cx - s*.9, cy + s*.2); x.quadraticCurveTo(cx - s*.5, cy, cx, cy + s*.3); x.quadraticCurveTo(cx + s*.5, cy, cx + s*.9, cy + s*.2); x.quadraticCurveTo(cx + s*.9, cy - s*.1, cx + s*1.3, cy - s*.3);
+    x.quadraticCurveTo(cx + s*.6, cy - s*.7, cx, cy - s*.2); x.fill(); x.stroke(); x.restore()};
+  const glowMoon = (x, f, cx, cy, r) => {x.save(); x.shadowColor = f.gold; x.shadowBlur = 60; x.fillStyle = f.gold; circle(x, cx, cy, r); x.fill(); x.restore()};
+  const jack = (x, f, cx, cy, r) => {goldLine(f, () => C.pumpkin(x, cx, cy, r, "#e0761c", false)); x.save(); x.fillStyle = "#ffe08a"; x.shadowColor = "#ffcf4a"; x.shadowBlur = 25;
+    for(const k of [-1, 1]){rpoly(x, [[cx + k*r*.42, cy - r*.32], [cx + k*r*.22, cy - r*.02], [cx + k*r*.6, cy - r*.02]], 4); x.fill()}
+    x.beginPath(); x.moveTo(cx - r*.55, cy + r*.18); for(let i = 0; i <= 8; i++) x.lineTo(cx - r*.55 + i*r*.1375, cy + r*.18 + (i%2 ? r*.12 : 0)); x.quadraticCurveTo(cx, cy + r*.75, cx - r*.55, cy + r*.18); x.fill(); x.restore()};
+  // 1 glowing jack-o'-lantern
+  const lantern = (x, f) => {stars(x, f, 3, 60, [70, 200, 930, 860]); glowMoon(x, f, 780, 300, 70); batS(x, f, 240, 300, 60); jack(x, f, 500, 600, 220); return 900};
+  // 2 full moon, bare tree and bats
+  const moonTree = (x, f) => {stars(x, f, 5, 60, [70, 200, 930, 860]); glowMoon(x, f, 560, 460, 220);
+    x.save(); x.strokeStyle = f.paper2; x.lineCap = "round"; const br = (x0, y0, a, len, w) => {if(w < 2) return; const x1 = x0 + Math.cos(a)*len, y1 = y0 + Math.sin(a)*len; x.lineWidth = w; x.beginPath(); x.moveTo(x0, y0); x.lineTo(x1, y1); x.stroke(); br(x1, y1, a - .45, len*.72, w*.65); br(x1, y1, a + .35, len*.68, w*.65)};
+    br(230, 860, -Math.PI/2 + .1, 200, 34); x.restore(); for(const [cx, cy, s] of [[640, 330, 50], [760, 420, 38], [480, 300, 32]]) batS(x, f, cx, cy, s); return 920};
+  // 3 witch hat and broom
+  const witch = (x, f) => {stars(x, f, 7, 60, [70, 200, 930, 860]); glowMoon(x, f, 500, 470, 200);
+    goldLine(f, () => {x.beginPath(); x.ellipse(500, 640, 260, 50, 0, 0, Math.PI*2); ink(x, f.paper2, 4); rpoly(x, [[370, 640], [560, 260], [630, 640]], 16); ink(x, f.paper2, 4)});
+    x.fillStyle = "#e0761c"; x.fillRect(380, 590, 245, 36); x.strokeStyle = f.gold; x.lineWidth = 3; x.strokeRect(380, 590, 245, 36); x.fillStyle = f.gold; x.fillRect(480, 586, 44, 44);
+    x.strokeStyle = "#8a5a2a"; x.lineWidth = 14; x.lineCap = "round"; x.beginPath(); x.moveTo(170, 820); x.lineTo(780, 740); x.stroke(); x.strokeStyle = f.gold; x.lineWidth = 3;
+    for(let i = -6; i <= 6; i++){x.beginPath(); x.moveTo(170, 820); x.lineTo(70, 820 + i*12); x.stroke()} return 900};
+  // 4 bowl of candy
+  const candy = (x, f) => {stars(x, f, 9, 50, [70, 200, 930, 860]); goldLine(f, () => {[[380, 520, "#e0761c"], [520, 470, "#7a3a9a"], [640, 530, "#3f8a4a"], [460, 580, "#c8203a"], [580, 600, "#e0761c"]].forEach(([cx, cy, c], i) => C.candy(x, cx, cy, 46, c, i*.5));
+    x.beginPath(); x.moveTo(230, 600); x.lineTo(770, 600); x.quadraticCurveTo(750, 830, 500, 830); x.quadraticCurveTo(250, 830, 230, 600); ink(x, f.paper2, 5)});
+    x.fillStyle = f.gold; x.font = `700 90px ${DISP}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("糖", 500, 715); batS(x, f, 220, 320, 50); batS(x, f, 780, 300, 56); return 900};
+  // 5 castle under the moon
+  const castle = (x, f) => {stars(x, f, 11, 70, [70, 200, 930, 860]); glowMoon(x, f, 500, 420, 180); x.fillStyle = f.paper2; x.strokeStyle = f.gold; x.lineWidth = 2;
+    const tower = (cx, w, top) => {x.fillRect(cx - w/2, top, w, 850 - top); x.strokeRect(cx - w/2, top, w, 850 - top); x.beginPath(); x.moveTo(cx - w*.65, top); x.lineTo(cx, top - w*1.1); x.lineTo(cx + w*.65, top); x.closePath(); x.fill(); x.stroke();
+      x.save(); x.fillStyle = "#ffcf4a"; x.fillRect(cx - 9, top + 50, 18, 30); x.restore()};
+    x.fillRect(260, 640, 480, 210); x.strokeRect(260, 640, 480, 210); tower(300, 90, 520); tower(700, 90, 540); tower(500, 110, 470);
+    x.save(); x.fillStyle = "#ffcf4a"; x.beginPath(); x.moveTo(470, 850); x.lineTo(470, 770); x.arc(500, 770, 30, Math.PI, 0); x.lineTo(530, 850); x.fill(); x.restore(); batS(x, f, 220, 300, 44); batS(x, f, 790, 330, 40); return 920};
+
+  registerFest({
+    id: "halloween", name: "萬聖節", phrase: "平安喜樂",
+    paper: "#3e1f5a", paper2: "#1f0f30", gold: "#f2b84a",
+    // up to 56 characters each; exactly 20 required
+    msgs: [
+      "萬聖節快樂！不給糖就搗蛋，送您一籃甜蜜蜜的祝福。",
+      "南瓜燈亮起來，壞運氣都跑光光。祝您平安健康，天天開心。",
+      "萬聖節到了，願所有小煩惱都被南瓜燈嚇跑，只留下快樂。",
+      "送您一顆最甜的糖果，祝您生活甜甜蜜蜜，萬事如意。",
+      "今晚月亮又圓又亮，願您心情也一樣明亮，身體健健康康。",
+      "萬聖節快樂！願您像南瓜一樣圓滿，像糖果一樣甜。",
+      "妖魔鬼怪都退散，好運福氣一起來。祝您平安順心。",
+      "願您笑口常開，比南瓜燈還燦爛。萬聖節快樂！",
+      "不嚇人，只送福。祝您萬聖節快樂，闔家平安。",
+      "秋夜涼了，記得添衣保暖。祝您萬聖節快樂，健康長壽。",
+      "糖果甜在嘴裡，祝福暖在心裡。祝您每天都過得開心。",
+      "萬聖節快樂！願您身體硬朗，精神比小精靈還好。",
+      "南瓜大豐收，福氣滿滿收。祝您日子越過越圓滿。",
+      "願今晚的月光帶給您好眠，明早的陽光帶給您好心情。",
+      "古靈精怪的節日，送上真心的祝福：祝您平安喜樂。",
+      "把所有不開心都裝進南瓜裡送走，留下滿滿的快樂給您。",
+      "萬聖節快樂！願您的生活像糖果罐，五顏六色又甜蜜。",
+      "願您吉祥如意，好運跟著南瓜燈一起亮起來。",
+      "今天就當個開心的大小孩，祝您萬聖節玩得開心！",
+      "祝您萬聖節快樂，鬼怪不近身，健康常相隨。",
+    ],
+    designs: [
+      {motif: "發光的南瓜燈咧嘴而笑，月下飛過一隻蝙蝠。", draw: lantern},
+      {motif: "巨大的金色滿月前，一棵枯樹與幾隻蝙蝠的剪影。", phrase: "月夜安康", draw: moonTree},
+      {motif: "滿月前的巫師帽與飛天掃帚。", phrase: "古靈精怪", draw: witch},
+      {motif: "一碗五顏六色的糖果，碗上寫著「糖」字。", phrase: "甜甜蜜蜜", draw: candy},
+      {motif: "滿月下的古堡剪影，窗裡透出溫暖燈光。", phrase: "萬事如意", draw: castle},
+    ],
+  });
+})();
+
+/* 自然風景照樣板：照片在 bg/halloween/，來源與授權見 bg/CREDITS.md */
+FESTS.find(f => f.id === "halloween").designs.push(...photoSet("halloween", [
+  ["一箱圓滾滾的南瓜。", "南瓜豐收"],
+  ["夜裡點亮的南瓜燈。", "歡樂萬聖夜"],
+  ["乾草堆上的南瓜燈。", "萬聖節快樂"],
+  ["一堆小南瓜。", "圓圓滿滿"],
+  ["兩顆橘紅的大南瓜。", "大吉大利"],
+  ["金黃色的滿月。", "月夜安康"],
+  ["山頭升起的滿月。", "平安喜樂"],
+  ["樹梢間的明月。", "古靈精怪"],
+  ["霧中的森林。", "神秘之夜"],
+  ["深秋的樹林。", "秋意正濃"],
 ]));
 /* 中秋節 (midautumn). Owner of this file: the 中秋節 designer. Add designs and messages here only. */
 (() => {
@@ -2987,6 +3304,158 @@ FESTS.find(f => f.id === "spring").designs.push(...photoSet("spring", [
   ["新綠中的桃花花苞。", "春意盎然"],
   ["山邊一樹粉櫻。", "福滿人間"],
 ]));
+/* 感恩節 (thanksgiving). Owner of this file: the 感恩節 designer. Add designs and messages here only. */
+(() => {
+  const C = CT;
+  const wheat = (x, f, cx, base, len, a) => {x.save(); x.translate(cx, base); x.rotate(a); x.strokeStyle = f.gold; x.lineWidth = 4; x.beginPath(); x.moveTo(0, 0); x.lineTo(0, -len); x.stroke(); x.fillStyle = f.gold;
+    for(let i = 0; i < 7; i++) for(const k of [-1, 1]){x.save(); x.translate(0, -len + i*len*.06); x.rotate(k*.5); x.beginPath(); x.ellipse(k*8, 0, 7, 16, 0, 0, Math.PI*2); x.fill(); x.restore()} x.restore()};
+  const apple = (x, f, cx, cy, r) => goldLine(f, () => {circle(x, cx, cy, r); ink(x, "#b8302a", 4); C.leaf(x, cx, cy - r, r*.7, -.6, "#3f7a3a")});
+  // 1 horn of plenty
+  const horn = (x, f) => {stars(x, f, 3, 50, [70, 200, 930, 860]); goldLine(f, () => {x.beginPath(); x.moveTo(820, 420); x.quadraticCurveTo(700, 460, 560, 470); x.lineTo(560, 760); x.quadraticCurveTo(760, 720, 860, 500); x.quadraticCurveTo(900, 420, 820, 420); ink(x, "#a8742a", 5);
+    x.strokeStyle = f.gold; x.lineWidth = 3; for(let i = 1; i < 5; i++){x.beginPath(); x.moveTo(560 + i*55, 470 - i*8); x.quadraticCurveTo(580 + i*55, 600, 560 + i*55, 750 - i*20); x.stroke()}
+    C.pumpkin(x, 440, 640, 110, "#d0661c", false); apple(x, f, 300, 560, 60); apple(x, f, 520, 520, 55); corn0(x, f); for(const [cx, cy] of [[350, 700], [400, 760], [300, 740]]){circle(x, cx, cy, 26); ink(x, "#6a2a6a", 3)}}); return 890};
+  const corn0 = (x, f) => {x.save(); x.translate(260, 660); x.rotate(-1.1); x.beginPath(); x.ellipse(0, 0, 34, 100, 0, 0, Math.PI*2); ink(x, "#e8b030", 4); x.restore()};
+  // 2 wreath of maple leaves around 謝
+  const wreath = (x, f) => {stars(x, f, 5, 50, [70, 200, 930, 860]); goldLine(f, () => {for(let i = 0; i < 14; i++){const a = i*2*Math.PI/14; C.maple(x, 500 + Math.cos(a)*240, 540 + Math.sin(a)*240, 70, ["#c8401c", "#e0761c", "#c89a2a"][i%3], a + Math.PI/2)}});
+    x.fillStyle = f.gold; x.font = `700 220px ${DISP}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("謝", 500, 550); return 890};
+  // 3 sheaf of wheat
+  const sheaf = (x, f) => {x.save(); x.fillStyle = f.gold; x.globalAlpha = .18; circle(x, 500, 520, 300); x.fill(); x.restore(); stars(x, f, 7, 40, [70, 200, 930, 860]);
+    for(let i = -6; i <= 6; i++) wheat(x, f, 500 + i*4, 820, 520 - Math.abs(i)*12, i*.07); x.fillStyle = "#b8302a"; x.fillRect(440, 680, 120, 40); x.strokeStyle = f.gold; x.lineWidth = 3; x.strokeRect(440, 680, 120, 40); return 900};
+  // 4 turkey in gold line
+  const turkey = (x, f) => {stars(x, f, 9, 50, [70, 200, 930, 860]); goldLine(f, () => {const cols = ["#b8401c", "#d0661c", "#c89a2a", "#7a5a2a"];
+    for(let i = 0; i < 9; i++){const a = Math.PI + (i + .5)*Math.PI/9; x.beginPath(); x.ellipse(500 + Math.cos(a)*190, 600 + Math.sin(a)*190, 50, 120, a + Math.PI/2, 0, Math.PI*2); ink(x, cols[i%4], 4)}
+    circle(x, 500, 640, 150); ink(x, "#6a3a1a", 4); circle(x, 500, 470, 70); ink(x, "#7a4a2a", 4); rpoly(x, [[480, 480], [520, 480], [500, 510]], 4); ink(x, f.gold, 3);
+    x.beginPath(); x.ellipse(520, 515, 12, 26, 0, 0, Math.PI*2); ink(x, "#b8302a", 3)}); x.fillStyle = f.gold; circle(x, 480, 455, 8); x.fill(); circle(x, 520, 455, 8); x.fill(); return 890};
+  // 5 harvest table with pumpkins, apples and a candle
+  const table = (x, f) => {stars(x, f, 11, 50, [70, 200, 930, 700]); x.save(); x.shadowColor = "#ffcf4a"; x.shadowBlur = 40; x.fillStyle = "#ffe08a"; x.beginPath(); x.ellipse(500, 330, 22, 44, 0, 0, Math.PI*2); x.fill(); x.restore();
+    goldLine(f, () => {x.beginPath(); x.roundRect(460, 370, 80, 260, 10); ink(x, "#fff3dc", 4); C.pumpkin(x, 300, 640, 120, "#d0661c", false); C.pumpkin(x, 700, 660, 100, "#c89a2a", false)}); apple(x, f, 480, 700, 55); apple(x, f, 580, 720, 50);
+    x.strokeStyle = f.gold; x.lineWidth = 4; x.beginPath(); x.moveTo(120, 790); x.lineTo(880, 790); x.stroke(); C.maple(x, 160, 300, 46, "#c8401c", .4); C.maple(x, 840, 320, 40, "#e0761c", -.4); return 900};
+
+  registerFest({
+    id: "thanksgiving", name: "感恩節", phrase: "感恩有您",
+    paper: "#8a3418", paper2: "#4a1a08", gold: "#f2c46a",
+    // up to 56 characters each; exactly 20 required
+    msgs: [
+      "感恩節快樂！謝謝您一路以來的照顧與疼愛，祝您身體健康。",
+      "感謝生命中有您，讓我的日子充滿溫暖。祝您福壽安康。",
+      "感恩的心，感謝有您。願您天天平安，事事順心。",
+      "謝謝您的養育之恩，這份情我永遠記在心裡。感恩節快樂！",
+      "秋天豐收的季節，願您收穫滿滿的健康、快樂與幸福。",
+      "滴水之恩，湧泉相報。謝謝您為我做的一切，祝您萬事如意。",
+      "感恩節到了，最想說的就是：謝謝您，我愛您。",
+      "感謝您的包容與付出，願您的晚年生活悠閒自在，笑口常開。",
+      "楓葉紅了，思念濃了。祝您感恩節快樂，健康長壽。",
+      "一年辛勞，感謝有您。願您好好休息，享受團圓的溫暖。",
+      "謝謝您總是把最好的留給我們。祝您感恩節快樂，闔家安康。",
+      "有您在的地方就是家。感恩節快樂，願您平安喜樂。",
+      "五穀豐登，萬事順遂。感謝您，也祝福您日子越過越好。",
+      "感恩節快樂！願您吃得香、睡得好，天天都有好心情。",
+      "感謝老天讓我有您這樣的家人，祝您身體硬朗，幸福滿滿。",
+      "您的叮嚀是我最溫暖的依靠。感恩節快樂，謝謝您。",
+      "懷著感恩的心，送上最誠摯的祝福：願您福如東海，壽比南山。",
+      "感謝每一天的平凡與溫暖。祝您感恩節快樂，諸事順心。",
+      "豐收時節話感恩，願您家庭和樂，身體安康。",
+      "千言萬語說不盡，只想對您說聲謝謝。祝您永遠健康快樂。",
+    ],
+    designs: [
+      {motif: "金邊豐收角裡滿出南瓜、蘋果、玉米與葡萄。", draw: horn},
+      {motif: "紅橙楓葉圍成花環，中央一個金色「謝」字。", phrase: "感恩惜福", draw: wreath},
+      {motif: "一束金黃麥穗用紅繩綁起，象徵五穀豐收。", phrase: "五穀豐登", draw: sheaf},
+      {motif: "金色線條描繪的火雞展開扇形尾羽。", phrase: "感恩節快樂", draw: turkey},
+      {motif: "豐收餐桌上點著蠟燭，擺著南瓜與紅蘋果。", phrase: "闔家團圓", draw: table},
+    ],
+  });
+})();
+
+/* 自然風景照樣板：照片在 bg/thanksgiving/，來源與授權見 bg/CREDITS.md */
+FESTS.find(f => f.id === "thanksgiving").designs.push(...photoSet("thanksgiving", [
+  ["街邊金黃的大樹。", "感恩有您"],
+  ["鋪滿落葉的小路。", "秋意濃濃"],
+  ["紅橙相間的楓樹。", "感恩惜福"],
+  ["收割中的金黃麥田。", "五穀豐登"],
+  ["等待收成的麥田。", "豐收喜悅"],
+  ["一大堆金黃玉米。", "年年有餘"],
+  ["夕陽下湖邊的秋林倒影。", "歲月靜好"],
+  ["湖畔的紅葉。", "紅葉迎秋"],
+  ["滿山紅葉。", "感恩節快樂"],
+  ["河畔的秋色。", "闔家團圓"],
+]));
+/* 情人節 (valentine). Owner of this file: the 情人節 designer. Add designs and messages here only. */
+(() => {
+  const C = CT;
+  const roseG = (x, f, cx, cy, r) => {C.leaf(x, cx - r*.2, cy + r*.8, r*1.1, 2.3, "#2f6b3a"); C.leaf(x, cx + r*.2, cy + r*.8, r*1.1, .8, "#2f6b3a"); circle(x, cx, cy, r); ink(x, "#c8203a", 4);
+    x.strokeStyle = f.gold; x.lineWidth = 3; x.beginPath(); for(let a = 0; a < 12; a += .2){const rr = r*.08*a; x.lineTo(cx + Math.cos(a)*rr*.85, cy + Math.sin(a)*rr*.85)} x.stroke()};
+  // 1 two linked hearts with 愛
+  const twoHearts = (x, f) => {stars(x, f, 3, 60, [70, 200, 930, 860]); goldLine(f, () => {C.heart(x, 400, 520, 190, f.paper2, false); C.heart(x, 600, 560, 190, "rgba(0,0,0,0)", false)});
+    x.fillStyle = f.gold; x.font = `700 150px ${DISP}`; x.textAlign = "center"; x.textBaseline = "middle"; x.fillText("愛", 410, 510); burst(x, f, 760, 300, 60, 12, f.gold); return 890};
+  // 2 bouquet of roses
+  const bouquet = (x, f) => {stars(x, f, 5, 50, [70, 200, 930, 860]); goldLine(f, () => {for(const [cx, cy] of [[400, 440], [600, 440], [500, 370], [440, 540], [560, 540]]){x.strokeStyle = f.gold; x.lineWidth = 6; x.beginPath(); x.moveTo(cx, cy); x.lineTo(500, 790); x.stroke(); roseG(x, f, cx, cy, 64)}
+    rpoly(x, [[380, 640], [620, 640], [560, 820], [440, 820]], 12); ink(x, f.paper2, 4); C.heart(x, 500, 720, 46, "#c8203a", false)}); return 890};
+  // 3 Chinese knot heart (同心結)
+  const knot = (x, f) => {cloud(x, f, 200, 300, .9, f.paper2); cloud(x, f, 800, 320, .8, f.paper2); goldLine(f, () => C.heart(x, 500, 560, 230, "#c8203a", false));
+    x.save(); x.beginPath(); x.moveTo(500, 560 + 230*.9); x.bezierCurveTo(500 - 345, 560, 500 - 207, 560 - 265, 500, 560 - 103); x.bezierCurveTo(500 + 207, 560 - 265, 500 + 345, 560, 500, 560 + 207); x.clip();
+    x.strokeStyle = f.gold; x.lineWidth = 3; x.globalAlpha = .7; for(let k = -12; k <= 12; k++){x.beginPath(); x.moveTo(500 + k*40 - 400, 300); x.lineTo(500 + k*40 + 400, 1100); x.moveTo(500 + k*40 + 400, 300); x.lineTo(500 + k*40 - 400, 1100); x.stroke()} x.restore();
+    x.strokeStyle = f.gold; x.lineWidth = 6; x.beginPath(); x.moveTo(500, 200); x.lineTo(500, 360); x.stroke(); for(let i = -3; i <= 3; i++){x.beginPath(); x.moveTo(500 + i*8, 770); x.lineTo(500 + i*14, 880); x.stroke()} return 920};
+  // 4 love letter
+  const letter = (x, f) => {stars(x, f, 7, 50, [70, 200, 930, 860]); goldLine(f, () => {x.beginPath(); x.roundRect(230, 420, 540, 360, 18); ink(x, "#fff3dc", 5);
+    x.beginPath(); x.moveTo(230, 430); x.lineTo(500, 640); x.lineTo(770, 430); ink(x, "rgba(0,0,0,0)", 5); C.heart(x, 500, 610, 60, "#c8203a", false)});
+    for(const [cx, cy, s] of [[260, 320, 40], [740, 300, 52], [500, 270, 30]]) goldLine(f, () => C.heart(x, cx, cy, s, "#c8203a", false)); return 890};
+  // 5 two linked gold rings under a heart
+  const rings = (x, f) => {stars(x, f, 9, 60, [70, 200, 930, 860]); x.fillStyle = f.gold; x.globalAlpha = .18; circle(x, 500, 560, 280); x.fill(); x.globalAlpha = 1;
+    x.lineWidth = 34; x.strokeStyle = f.paper2; for(const cx of [410, 590]){circle(x, cx, 620, 140); x.stroke()}
+    x.lineWidth = 24; x.strokeStyle = f.gold; circle(x, 410, 620, 140); x.stroke(); circle(x, 590, 620, 140); x.stroke();
+    x.strokeStyle = f.paper2; x.lineWidth = 34; x.beginPath(); x.arc(410, 620, 140, -.5, .1); x.stroke(); x.strokeStyle = f.gold; x.lineWidth = 24; x.stroke();
+    goldLine(f, () => C.heart(x, 500, 370, 80, "#c8203a", false)); sparkle4(x, 300, 480, 22, f.gold); sparkle4(x, 700, 470, 18, f.gold); return 890};
+
+  registerFest({
+    id: "valentine", name: "情人節", phrase: "情深意長",
+    paper: "#a3182a", paper2: "#5e0c18", gold: "#f3cf86",
+    // up to 56 characters each; exactly 20 required
+    msgs: [
+      "情人節快樂！願您們恩恩愛愛、甜甜蜜蜜，牽手走過每一個春夏秋冬。",
+      "祝福您們的愛情像陳年老酒，越陳越香，越久越甜。",
+      "執子之手，與子偕老。願您們身體健康，相親相愛到白頭。",
+      "謝謝您們讓我看見愛最美的樣子。情人節快樂，永遠幸福！",
+      "情人節到了，願您們心心相印、天天開心，日子越過越甜。",
+      "願您們今天一起吃頓好飯、散散步，把愛說出口。情人節快樂！",
+      "幾十年如一日的相伴最動人。祝您們情深意長，平安喜樂。",
+      "有您們在，家裡就有滿滿的愛。祝情人節快樂，恩愛如初。",
+      "愛是彼此照顧、互相扶持。祝您們健康長壽，攜手共度好時光。",
+      "玫瑰代表愛，巧克力代表甜。願您們的每一天都又愛又甜。",
+      "情人節快樂！願您們笑口常開，相知相惜，幸福長長久久。",
+      "最浪漫的事，就是陪您一起慢慢變老。祝您們白頭偕老。",
+      "願天下有情人終成眷屬，也願您們的愛一年比一年更深。",
+      "今天不只是情人節，也是感謝您們相愛相守的日子。",
+      "祝您們心意相通、和和美美，平平安安過好每一天。",
+      "愛在日常的一粥一飯裡。祝您們身體安康，恩愛甜蜜。",
+      "願這份愛像春天的花，年年盛開；像冬天的陽光，日日溫暖。",
+      "情人節快樂！記得互相說聲「我愛你」，幸福就在身邊。",
+      "願您們永遠是彼此最好的伴，一起看日出，一起看夕陽。",
+      "祝福滿滿送給最恩愛的您們：情人節快樂，百年好合。",
+    ],
+    designs: [
+      {motif: "兩顆相扣的金邊愛心，中央一個「愛」字。", draw: twoHearts},
+      {motif: "一束紅玫瑰綁著愛心緞帶，金色線條描邊。", phrase: "花開並蒂", draw: bouquet},
+      {motif: "紅色同心結愛心，織滿金色格紋，下垂流蘇。", phrase: "永結同心", draw: knot},
+      {motif: "一封以愛心封口的情書，四周飄著小愛心。", phrase: "情書一封", draw: letter},
+      {motif: "一對相扣的金戒指，上方一顆紅色愛心。", phrase: "百年好合", draw: rings},
+    ],
+  });
+})();
+
+/* 自然風景照樣板：照片在 bg/valentine/，來源與授權見 bg/CREDITS.md */
+FESTS.find(f => f.id === "valentine").designs.push(...photoSet("valentine", [
+  ["花園裡盛開的紅玫瑰。", "愛意綿綿"],
+  ["紅玫瑰花拱成的大愛心。", "心心相印"],
+  ["粉紅與白色的玫瑰花。", "甜甜蜜蜜"],
+  ["紅粉玫瑰配滿天星的花束。", "花開並蒂"],
+  ["沾著露珠的紅玫瑰。", "情深意長"],
+  ["一叢鮮紅的玫瑰。", "浪漫滿屋"],
+  ["一簇粉紅玫瑰。", "恩愛甜蜜"],
+  ["紅粉黃三色鬱金香花束。", "幸福美滿"],
+  ["盛開的紅色鬱金香。", "情人節快樂"],
+  ["粉紫色的晚霞天空。", "白頭偕老"],
+]));
 /* 聖誕節 (xmas). Owner of this file: the 聖誕節 designer. Add designs and messages here only. */
 (() => {
   const RED = "#d9332b", GRN = "#2f8052", GRN2 = "#3f9a62";
@@ -3663,6 +4132,341 @@ FESTS.find(f => f.id === "yuanxiao").designs.push(...photoSet("yuanxiao", [
   ["黃昏時的山色倒映湖中。", "闔家歡樂"],
   ["夜色中靜靜的山巒與雲霧。", "吉祥如意"],
 ]));
+
+/* ---------- 卡通 designs: five per festival (toolkit in src/cartoon.js) ---------- */
+(() => {
+const C = CT, PAL = (paper, paper2, gold) => ({paper, paper2, gold: gold || "#ffe08a"});
+const RED = PAL("#b8302a", "#7a1a14"), PINK = PAL("#b8406a", "#7a2244"), BLUE = PAL("#2f5d8f", "#173455"), GREEN = PAL("#2f7a4f", "#164a2c"),
+  PURPLE = PAL("#5a3a8a", "#2f1d52"), ORANGE = PAL("#b8551e", "#74300c"), BROWN = PAL("#7a4a26", "#45270f"), NAVY = PAL("#243a6b", "#111f40");
+const fuText = (x, cx, cy, s) => {x.save(); x.translate(cx, cy); x.rotate(Math.PI/4); x.beginPath(); x.roundRect(-s/2, -s/2, s, s, s*.1); ink(x, "#e8352b"); x.restore(); C.text(x, "福", cx, cy + 4, s*.62, "#ffe08a")};
+const firecracker = (x, cx, cy, s, rot) => {x.save(); x.translate(cx, cy); x.rotate(rot || 0); x.beginPath(); x.roundRect(-s*.22, -s*.6, s*.44, s*1.2, 8); ink(x, "#e8352b", 5);
+  x.fillStyle = "#ffd84a"; x.fillRect(-s*.22, -s*.42, s*.44, s*.1); x.fillRect(-s*.22, s*.3, s*.44, s*.1);
+  x.strokeStyle = OUT; x.lineWidth = 4; x.beginPath(); x.moveTo(0, -s*.6); x.quadraticCurveTo(s*.2, -s*.85, s*.05, -s*.98); x.stroke(); sparkle4(x, s*.05, -s*1.02, s*.18, "#ffd84a"); x.restore()};
+const orange = (x, cx, cy, r, fc) => {C.ball(x, cx, cy, r, "#ff9f1c", fc); C.leaf(x, cx + r*.1, cy - r*.9, r*.6, -.5, "#5fb35f")};
+const tangyuan = (x, cx, cy, r, pink, fc) => C.ball(x, cx, cy, r, pink ? "#ffc4d6" : "#fffaf2", fc);
+const bowl = (x, cx, cy, w, fill) => {x.beginPath(); x.moveTo(cx - w/2, cy); x.lineTo(cx + w/2, cy); x.quadraticCurveTo(cx + w*.45, cy + w*.45, cx, cy + w*.45); x.quadraticCurveTo(cx - w*.45, cy + w*.45, cx - w/2, cy); x.closePath(); ink(x, fill || "#5ab0e0");
+  x.beginPath(); x.ellipse(cx, cy, w/2, w*.07, 0, 0, Math.PI*2); ink(x, "#fff3d6", 5)};
+const steam = (x, cx, cy, s) => {x.save(); x.strokeStyle = "rgba(255,255,255,.85)"; x.lineWidth = 7; x.lineCap = "round"; for(const d of [-1, 0, 1]){x.beginPath(); x.moveTo(cx + d*s, cy); x.bezierCurveTo(cx + d*s - s*.4, cy - s*.6, cx + d*s + s*.4, cy - s*.9, cx + d*s, cy - s*1.5); x.stroke()} x.restore()};
+const zongzi = (x, cx, cy, s, fc) => {C.tri(x, cx, cy, s*1.3, s*1.15, "#5aa64a", false); x.save(); x.strokeStyle = "#f1d48a"; x.lineWidth = 9; x.beginPath(); x.moveTo(cx - s*.42, cy + s*.12); x.lineTo(cx + s*.42, cy + s*.12); x.stroke(); x.restore();
+  x.strokeStyle = "rgba(0,0,0,.18)"; x.lineWidth = 3; x.beginPath(); x.moveTo(cx - s*.2, cy - s*.2); x.lineTo(cx - s*.45, cy + s*.5); x.moveTo(cx + s*.2, cy - s*.2); x.lineTo(cx + s*.45, cy + s*.5); x.stroke(); face(x, cx, cy + s*.33, s*.25, fc || {})};
+const mooncake = (x, cx, cy, r, ch, fc) => {const n = 14; x.beginPath(); for(let i = 0; i <= n*8; i++){const a = i*2*Math.PI/(n*8), rr = r*(1 + .06*Math.cos(a*n)); x.lineTo(cx + Math.cos(a)*rr, cy + Math.sin(a)*rr)} x.closePath(); ink(x, "#d9913a");
+  circle(x, cx, cy, r*.78); ink(x, "#e8a84a", 4); if(ch) C.text(x, ch, cx, cy + 3, r*.75, "#fff3c4"); else face(x, cx, cy + r*.05, r*.5, fc || {})};
+const fullMoon = (x, cx, cy, r, fc) => {x.save(); x.shadowColor = "rgba(255,240,170,.9)"; x.shadowBlur = 60; circle(x, cx, cy, r); x.fillStyle = "#fff1a8"; x.fill(); x.restore(); C.ball(x, cx, cy, r, "#fff1a8", fc)};
+const peach = (x, cx, cy, s, fc) => {C.leaf(x, cx - s*.1, cy - s*.75, s*.7, -2.4, "#5fb35f"); C.leaf(x, cx + s*.1, cy - s*.75, s*.7, -.7, "#5fb35f");
+  x.beginPath(); x.moveTo(cx, cy - s*.85); x.bezierCurveTo(cx + s*1.1, cy - s*.8, cx + s*1.05, cy + s*.9, cx, cy + s*.85); x.bezierCurveTo(cx - s*1.05, cy + s*.9, cx - s*1.1, cy - s*.8, cx, cy - s*.85); ink(x, "#ffa0b4");
+  x.fillStyle = "rgba(255,80,110,.35)"; x.beginPath(); x.ellipse(cx, cy - s*.35, s*.35, s*.25, 0, 0, Math.PI*2); x.fill(); face(x, cx, cy + s*.15, s*.42, fc || {})};
+const dumpling = (x, cx, cy, s, fc) => {x.beginPath(); x.moveTo(cx - s, cy + s*.3); x.quadraticCurveTo(cx - s*.95, cy - s*.75, cx, cy - s*.8); x.quadraticCurveTo(cx + s*.95, cy - s*.75, cx + s, cy + s*.3); x.quadraticCurveTo(cx, cy + s*.55, cx - s, cy + s*.3); ink(x, "#fff6e2");
+  x.strokeStyle = OUT; x.lineWidth = 4; for(const d of [-.5, -.2, .1, .4]){x.beginPath(); x.moveTo(cx + d*s, cy - s*.72); x.quadraticCurveTo(cx + d*s + s*.15, cy - s*.95, cx + d*s + s*.25, cy - s*.7); x.stroke()} face(x, cx, cy - s*.05, s*.4, fc || {})};
+const dragonBoat = (x, cx, cy, s) => {x.beginPath(); x.moveTo(cx - s*1.6, cy - s*.2); x.quadraticCurveTo(cx, cy + s*.6, cx + s*1.5, cy - s*.15); x.lineTo(cx + s*1.35, cy + s*.15); x.quadraticCurveTo(cx, cy + s*.55, cx - s*1.45, cy + s*.1); x.closePath(); ink(x, "#e8352b");
+  x.fillStyle = "#ffd84a"; for(let i = -4; i <= 4; i++){circle(x, cx + i*s*.28, cy + s*.18, s*.06); x.fill()}
+  C.ball(x, cx + s*1.55, cy - s*.5, s*.35, "#3fae5a", {open: true}); x.strokeStyle = OUT; x.lineWidth = 5; for(const d of [-.15, .15]){x.beginPath(); x.moveTo(cx + s*1.5 + d*s, cy - s*.8); x.lineTo(cx + s*1.4 + d*s*2, cy - s*1.05); x.stroke()}
+  rpoly(x, [[cx - s*1.55, cy - s*.15], [cx - s*1.95, cy - s*.65], [cx - s*1.35, cy - s*.05]], 6); ink(x, "#3fae5a", 5)};
+const wave = (x, y, fill) => {x.beginPath(); x.moveTo(30, 1000); x.lineTo(30, y); for(let px = 30; px < 970; px += 90){x.quadraticCurveTo(px + 22, y - 30, px + 45, y); x.quadraticCurveTo(px + 67, y + 22, px + 90, y)} x.lineTo(970, 1000); x.closePath(); ink(x, fill, 5)};
+const clock = (x, cx, cy, r) => {C.ball(x, cx, cy, r, "#fff6dc", false); x.fillStyle = OUT; for(let i = 0; i < 12; i++){const a = i*Math.PI/6; circle(x, cx + Math.cos(a)*r*.82, cy + Math.sin(a)*r*.82, i%3 ? 5 : 9); x.fill()}
+  x.strokeStyle = OUT; x.lineCap = "round"; x.lineWidth = 12; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx, cy - r*.62); x.stroke(); x.lineWidth = 9; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx - r*.05, cy - r*.45); x.stroke(); face(x, cx, cy + r*.32, r*.3, {happy: true})};
+const tie = (x, cx, cy, s) => {rpoly(x, [[cx - s*.25, cy - s], [cx + s*.25, cy - s], [cx + s*.12, cy - s*.7], [cx + s*.4, cy + s*.8], [cx, cy + s*1.1], [cx - s*.4, cy + s*.8], [cx - s*.12, cy - s*.7]], 8); ink(x, "#3a6ad9");
+  x.strokeStyle = "rgba(255,255,255,.55)"; x.lineWidth = 8; for(const d of [-.2, .25, .7]){x.beginPath(); x.moveTo(cx - s*.3, cy + d*s); x.lineTo(cx + s*.3, cy + d*s - s*.2); x.stroke()} face(x, cx, cy + s*.15, s*.2, {})};
+const teacup = (x, cx, cy, s, fc) => {x.lineWidth = 10; x.strokeStyle = OUT; x.beginPath(); x.arc(cx + s*.75, cy, s*.3, -1.4, 1.4); x.stroke(); x.lineWidth = 6; x.strokeStyle = "#fff"; x.stroke();
+  x.beginPath(); x.moveTo(cx - s*.85, cy - s*.5); x.lineTo(cx + s*.85, cy - s*.5); x.quadraticCurveTo(cx + s*.8, cy + s*.7, cx, cy + s*.7); x.quadraticCurveTo(cx - s*.8, cy + s*.7, cx - s*.85, cy - s*.5); ink(x, "#fffaf0"); face(x, cx, cy + s*.08, s*.38, fc || {})};
+const cake = (x, cx, cy, s, fc) => {x.beginPath(); x.roundRect(cx - s, cy - s*.35, s*2, s*.9, 18); ink(x, "#ffc4d6"); x.beginPath(); x.roundRect(cx - s*.7, cy - s*.95, s*1.4, s*.65, 16); ink(x, "#fff3e6");
+  x.fillStyle = "#ff6f91"; for(let i = -4; i <= 4; i++){circle(x, cx + i*s*.22, cy - s*.33, s*.09); x.fill()}
+  for(const d of [-.35, 0, .35]){x.beginPath(); x.roundRect(cx + d*s - 7, cy - s*1.3, 14, s*.38, 4); ink(x, "#7ec8ff", 4); sparkle4(x, cx + d*s, cy - s*1.42, 14, "#ffb52e")}
+  face(x, cx, cy + s*.12, s*.32, fc || {})};
+const rose = (x, cx, cy, r) => {C.leaf(x, cx - r*.2, cy + r*.8, r*1.1, 2.3, "#4caf50"); C.leaf(x, cx + r*.2, cy + r*.8, r*1.1, .8, "#4caf50"); circle(x, cx, cy, r); ink(x, "#e8334a");
+  x.strokeStyle = "#a81b30"; x.lineWidth = 5; x.lineCap = "round"; x.beginPath(); for(let a = 0; a < 12; a += .2){const rr = r*.08*a; x.lineTo(cx + Math.cos(a)*rr*.85, cy + Math.sin(a)*rr*.85)} x.stroke()};
+const cupid = (x, cx, cy, s) => {for(const k of [-1, 1]){x.beginPath(); x.ellipse(cx + k*s*.95, cy - s*.1, s*.55, s*.32, k*-.5, 0, Math.PI*2); ink(x, "#fff")} C.ball(x, cx, cy, s*.75, "#ffd9b8", {happy: true});
+  x.beginPath(); x.ellipse(cx, cy - s*.85, s*.4, s*.12, 0, 0, Math.PI*2); x.lineWidth = 6; x.strokeStyle = "#ffd84a"; x.stroke()};
+const witchHat = (x, cx, cy, s) => {x.beginPath(); x.ellipse(cx, cy, s, s*.2, 0, 0, Math.PI*2); ink(x, "#4b2a7a"); rpoly(x, [[cx - s*.5, cy], [cx + s*.15, cy - s*1.3], [cx + s*.5, cy]], 10); ink(x, "#4b2a7a"); x.fillStyle = "#ff9f1c"; x.fillRect(cx - s*.48, cy - s*.22, s*.96, s*.15)};
+const bat = (x, cx, cy, s) => {x.beginPath(); x.moveTo(cx, cy - s*.2); x.quadraticCurveTo(cx - s*.6, cy - s*.7, cx - s*1.3, cy - s*.3); x.quadraticCurveTo(cx - s*.9, cy - s*.1, cx - s*.9, cy + s*.2); x.quadraticCurveTo(cx - s*.6, cy, cx - s*.4, cy + s*.25); x.quadraticCurveTo(cx - s*.2, cy, cx, cy + s*.3);
+  x.quadraticCurveTo(cx + s*.2, cy, cx + s*.4, cy + s*.25); x.quadraticCurveTo(cx + s*.6, cy, cx + s*.9, cy + s*.2); x.quadraticCurveTo(cx + s*.9, cy - s*.1, cx + s*1.3, cy - s*.3); x.quadraticCurveTo(cx + s*.6, cy - s*.7, cx, cy - s*.2); ink(x, "#5b4b7a", 4); face(x, cx, cy, s*.28, {})};
+const pie = (x, cx, cy, s, fc) => {x.beginPath(); x.ellipse(cx, cy + s*.25, s*1.1, s*.4, 0, 0, Math.PI*2); ink(x, "#d9a066"); x.beginPath(); x.ellipse(cx, cy, s, s*.4, 0, 0, Math.PI*2); ink(x, "#e07b2c");
+  x.strokeStyle = "#f6c27a"; x.lineWidth = 12; x.beginPath(); x.ellipse(cx, cy, s*.95, s*.36, 0, 0, Math.PI*2); x.stroke(); C.ball(x, cx, cy - s*.05, s*.28, "#fffaf0", false); face(x, cx, cy + s*.45, s*.3, fc || {})};
+const corn = (x, cx, cy, s, rot) => {x.save(); x.translate(cx, cy); x.rotate(rot || 0); for(const k of [-1, 1]){x.beginPath(); x.moveTo(0, s*.9); x.quadraticCurveTo(k*s*.7, s*.2, k*s*.3, -s*.6); x.quadraticCurveTo(k*s*.2, s*.2, 0, s*.9); ink(x, "#8fbf4a", 4)}
+  x.beginPath(); x.ellipse(0, 0, s*.28, s*.8, 0, 0, Math.PI*2); ink(x, "#ffcd3c", 4); x.fillStyle = "#e8a400"; for(let i = -3; i <= 3; i++) for(const d of [-.1, .1]){circle(x, d*s, i*s*.2, 4); x.fill()} x.restore()};
+const reindeer = (x, cx, cy, s) => {x.strokeStyle = OUT; x.lineWidth = 9; x.lineCap = "round"; for(const k of [-1, 1]){x.beginPath(); x.moveTo(cx + k*s*.4, cy - s*.7); x.lineTo(cx + k*s*.7, cy - s*1.4); x.moveTo(cx + k*s*.58, cy - s*1.1); x.lineTo(cx + k*s*1.0, cy - s*1.25); x.stroke()}
+  x.strokeStyle = "#a8743c"; x.lineWidth = 5; x.stroke(); C.bear(x, cx, cy, s, "#b5803f", {}); C.ball(x, cx, cy + s*.38, s*.16, "#ff3b3b", false)};
+const fireworkC = (x, cx, cy, r, col) => {x.save(); x.strokeStyle = col; x.lineWidth = 7; x.lineCap = "round"; for(let i = 0; i < 12; i++){const a = i*Math.PI/6; x.beginPath(); x.moveTo(cx + Math.cos(a)*r*.35, cy + Math.sin(a)*r*.35); x.lineTo(cx + Math.cos(a)*r, cy + Math.sin(a)*r); x.stroke(); sparkle4(x, cx + Math.cos(a)*r*1.12, cy + Math.sin(a)*r*1.12, 10, col)} x.restore()};
+const kite = (x, cx, cy, s) => {rpoly(x, [[cx, cy - s], [cx + s*.7, cy], [cx, cy + s*1.1], [cx - s*.7, cy]], 8); ink(x, "#ff5a5a"); x.strokeStyle = OUT; x.lineWidth = 3; x.beginPath(); x.moveTo(cx, cy - s); x.lineTo(cx, cy + s*1.1); x.moveTo(cx - s*.7, cy); x.lineTo(cx + s*.7, cy); x.stroke();
+  x.beginPath(); x.moveTo(cx, cy + s*1.1); x.bezierCurveTo(cx - s*.4, cy + s*1.6, cx + s*.4, cy + s*1.9, cx, cy + s*2.4); x.stroke(); for(const t of [1.5, 1.9, 2.3]){sparkle4(x, cx + (t === 1.9 ? 12 : -10), cy + s*t, 14, "#ffd84a")} face(x, cx, cy + s*.1, s*.3, {})};
+const grandpa = (x, cx, cy, s, girl) => {C.ball(x, cx, cy, s, "#ffd9b8", {happy: true}); x.save(); x.fillStyle = "#f2f2f2"; x.strokeStyle = OUT; x.lineWidth = 5;
+  if(girl){x.beginPath(); x.arc(cx, cy - s*.15, s*1.02, Math.PI*1.05, Math.PI*1.95); x.quadraticCurveTo(cx, cy - s*.55, cx - s*.98, cy - s*.45); x.fill(); x.stroke(); circle(x, cx, cy - s*1.15, s*.32); ink(x, "#eeeeee", 5)}
+  else {x.beginPath(); x.ellipse(cx, cy + s*.62, s*.42, s*.28, 0, 0, Math.PI); x.fill(); x.stroke(); for(const k of [-1, 1]){x.beginPath(); x.ellipse(cx + k*s*.9, cy - s*.2, s*.18, s*.3, 0, 0, Math.PI*2); x.fill(); x.stroke()}}
+  x.lineWidth = 4; for(const k of [-1, 1]){x.beginPath(); x.arc(cx + k*s*.38, cy - s*.1, s*.2, 0, Math.PI*2); x.stroke()} x.beginPath(); x.moveTo(cx - s*.18, cy - s*.1); x.lineTo(cx + s*.18, cy - s*.1); x.stroke(); x.restore()};
+const heartRain = (x, seed, n, cols) => {const r = rand(seed); for(let i = 0; i < n; i++) C.heart(x, 90 + r()*820, 240 + r()*560, 14 + r()*16, cols[i%cols.length], false)};
+const snowDots = (x, seed, n) => {const r = rand(seed); x.fillStyle = "#fff"; for(let i = 0; i < n; i++){x.globalAlpha = .6 + r()*.4; circle(x, 60 + r()*880, 230 + r()*640, 4 + r()*7); x.fill()} x.globalAlpha = 1};
+
+/* 春節 */
+cartoonSet("spring", [
+  {motif: "笑咪咪的大紅包，旁邊兩串鞭炮劈啪響，彩紙飛揚。", phrase: "恭喜發財", colors: RED, sky: ["#ffe2b8", "#ffb38a"], scene(x){
+    C.confetti(x, 3, 60, [70, 220, 930, 860], ["#ff5a5a", "#ffd84a", "#5ab0ff", "#7ed957"]);
+    C.box(x, 500, 560, 320, 420, "#e8352b", {happy: true, open: true}); circle(x, 500, 470, 70); ink(x, "#ffd84a"); C.text(x, "福", 500, 474, 84, "#e8352b");
+    firecracker(x, 210, 500, 150, -.25); firecracker(x, 790, 500, 150, .25); C.hill(x, 860, "#ffcf6e", 30)}},
+  {motif: "兩顆圓滾滾的橘子抱著福字斗方，大吉大利。", phrase: "大吉大利", colors: RED, sky: ["#fff0c8", "#ffc98a"], scene(x){
+    C.sparkles(x, 5, 18, [80, 230, 920, 820], "#fff"); fuText(x, 500, 470, 260); orange(x, 290, 700, 115, {happy: true}); orange(x, 710, 700, 115, {open: true}); C.hill(x, 860, "#ffad5a", 26)}},
+  {motif: "兩盞紅燈籠娃娃掛在屋簷下，春字燈籠笑開懷。", phrase: "新春快樂", colors: RED, sky: ["#ffd9c2", "#ff9f8a"], scene(x){
+    x.strokeStyle = OUT; x.lineWidth = 8; x.beginPath(); x.moveTo(60, 250); x.quadraticCurveTo(500, 300, 940, 250); x.stroke();
+    C.lantern(x, 290, 520, 170, "#ef4b3c", null, {happy: true}); C.lantern(x, 710, 520, 170, "#ef4b3c", null, {open: true}); C.lantern(x, 500, 470, 110, "#ff7a3c", "春");
+    C.flower(x, 160, 820, 60, "#ff8fb1", "#ffd84a"); C.flower(x, 840, 820, 60, "#ff8fb1", "#ffd84a"); C.hill(x, 880, "#ff7f6e", 26)}},
+  {motif: "舞獅寶寶咧嘴大笑，彩球在頭頂蹦蹦跳。", phrase: "瑞獅迎春", colors: RED, sky: ["#ffeec2", "#ffc27a"], scene(x){
+    C.confetti(x, 8, 50, [70, 220, 930, 860], ["#ff5a5a", "#ffd84a", "#7ed957"]);
+    for(const k of [-1, 1]){circle(x, 500 + k*150, 420, 70); ink(x, "#ffd84a")} C.ball(x, 500, 560, 230, "#ff5a3c", {open: true});
+    x.fillStyle = "#ffd84a"; x.beginPath(); x.ellipse(500, 390, 120, 40, 0, 0, Math.PI*2); ink(x, "#ffd84a"); C.text(x, "王", 500, 392, 60, "#e8352b");
+    C.ball(x, 500, 270, 50, "#ff8fd0", false); for(const k of [-1, 1]){circle(x, 500 + k*240, 600, 50); ink(x, "#fff")} C.hill(x, 850, "#ffad5a", 30)}},
+  {motif: "大大的金元寶咧嘴笑，身邊金幣叮噹滾。", phrase: "招財進寶", colors: RED, sky: ["#fff3c8", "#ffd27a"], scene(x){
+    C.sparkles(x, 9, 22, [80, 230, 920, 820], "#fff"); x.beginPath(); x.moveTo(250, 520); x.quadraticCurveTo(500, 760, 750, 520); x.quadraticCurveTo(780, 720, 500, 760); x.quadraticCurveTo(220, 720, 250, 520); ink(x, "#ffcc33");
+    C.ball(x, 500, 520, 150, "#ffd84a", {happy: true, open: true}); for(const [cx, cy] of [[200, 760], [800, 760], [300, 820], [700, 820]]){C.ball(x, cx, cy, 50, "#ffcc33", false); C.text(x, "$", cx, cy + 2, 46, "#e8a400")} C.hill(x, 880, "#ffb04a", 20)}},
+]);
+
+/* 元宵節 */
+cartoonSet("yuanxiao", [
+  {motif: "一碗熱呼呼的湯圓寶寶，紅白圓滾滾一起泡澡。", phrase: "團團圓圓", colors: RED, sky: ["#ffe8d0", "#ffc0a0"], scene(x){
+    steam(x, 500, 400, 70); tangyuan(x, 400, 560, 80, false, {happy: true}); tangyuan(x, 600, 560, 80, true, {}); tangyuan(x, 500, 530, 85, false, {open: true}); bowl(x, 500, 600, 520, "#5ab0e0")}},
+  {motif: "兔子燈籠拉著小推車，一路叮叮噹噹去賞燈。", phrase: "元宵快樂", colors: NAVY, sky: ["#2a3a7a", "#6a5aa8"], scene(x){
+    snowDots(x, 4, 30); fullMoon(x, 760, 330, 100, {happy: true});
+    C.bunny(x, 420, 620, 150, "#fff", {open: true}); C.lantern(x, 420, 640, 70, "#ef4b3c", "燈"); for(const k of [-1, 1]){circle(x, 420 + k*110, 800, 45); ink(x, "#ffd84a")} C.hill(x, 860, "#4b3a8a", 26)}},
+  {motif: "一排彩色燈籠娃娃，各自寫著猜燈謎的「謎」字。", phrase: "燈謎猜猜", colors: PURPLE, sky: ["#3a2a6a", "#8a5aa8"], scene(x){
+    x.strokeStyle = "#ffd84a"; x.lineWidth = 6; x.beginPath(); x.moveTo(60, 260); x.quadraticCurveTo(500, 330, 940, 260); x.stroke();
+    [["#ef4b3c", "猜"], ["#ff9f1c", null], ["#ef4b3c", "謎"], ["#ff5aa0", null]].forEach(([c, ch], i) => C.lantern(x, 170 + i*220, 470 + (i%2)*70, 105, c, ch, {happy: i === 1}));
+    C.text(x, "？", 500, 760, 120, "#ffd84a"); C.hill(x, 870, "#5a3a8a", 26)}},
+  {motif: "元宵夜的大月亮笑咪咪，三顆湯圓搭著雲朵賞月。", phrase: "花好月圓", colors: NAVY, sky: ["#1f2d66", "#4b5aa8"], scene(x){
+    snowDots(x, 7, 40); fullMoon(x, 500, 420, 160, {happy: true}); C.cloud(x, 500, 720, 240, "#fff");
+    tangyuan(x, 400, 650, 55, true, {}); tangyuan(x, 500, 630, 60, false, {open: true}); tangyuan(x, 600, 650, 55, true, {happy: true})}},
+  {motif: "天燈寶寶帶著願望緩緩升空，滿天星光。", phrase: "心想事成", colors: PURPLE, sky: ["#2a2060", "#a05a8a"], scene(x){
+    C.sparkles(x, 2, 26, [70, 220, 930, 820], "#ffe8a0");
+    for(const [cx, cy, s] of [[500, 500, 1], [230, 380, .55], [780, 360, .6], [300, 700, .45], [760, 680, .5]]){x.save(); x.shadowColor = "rgba(255,200,90,.9)"; x.shadowBlur = 40;
+      rpoly(x, [[cx - 120*s, cy - 150*s], [cx + 120*s, cy - 150*s], [cx + 90*s, cy + 140*s], [cx - 90*s, cy + 140*s]], 30*s); x.restore(); ink(x, "#ffb24a"); face(x, cx, cy, 70*s, s === 1 ? {open: true} : {happy: true})}
+    C.text(x, "福", 500, 590, 70, "#e8352b"); C.hill(x, 880, "#3a2a6a", 24)}},
+]);
+
+/* 端午節 */
+cartoonSet("duanwu", [
+  {motif: "三顆綠油油的粽子寶寶手牽手，排排站。", phrase: "粽享幸福", colors: GREEN, sky: ["#e2f6d8", "#a8deb0"], scene(x){
+    C.sparkles(x, 3, 14, [80, 230, 920, 600], "#fff"); zongzi(x, 280, 620, 160, {happy: true}); zongzi(x, 720, 620, 160, {}); zongzi(x, 500, 560, 200, {open: true}); C.hill(x, 850, "#7ccf7a", 30)}},
+  {motif: "笑嘻嘻的龍舟在浪花裡衝刺，太陽公公加油。", phrase: "龍舟競渡", colors: BLUE, sky: ["#c8ecff", "#7cc8f0"], scene(x){
+    C.sun(x, 780, 320, 80, "#ffd84a", {happy: true}); C.cloud(x, 230, 330, 120); dragonBoat(x, 470, 640, 200); wave(x, 760, "#4aa8e0"); wave(x, 840, "#2f8ad0")}},
+  {motif: "香包寶寶掛著五彩流蘇，兩旁艾草搖啊搖。", phrase: "平安吉祥", colors: RED, sky: ["#fff0d0", "#ffcf9a"], scene(x){
+    for(const k of [-1, 1]){C.leaf(x, 500 + k*280, 760, 330, k < 0 ? -1.8 : -1.35, "#5fb35f")}
+    x.strokeStyle = OUT; x.lineWidth = 5; x.beginPath(); x.moveTo(500, 220); x.lineTo(500, 360); x.stroke(); C.heart(x, 500, 520, 190, "#e8352b", {happy: true});
+    for(let i = -3; i <= 3; i++){x.strokeStyle = ["#ff5a5a", "#ffd84a", "#5ab0ff", "#7ed957"][(i + 3)%4]; x.lineWidth = 8; x.beginPath(); x.moveTo(500 + i*14, 690); x.lineTo(500 + i*22, 820); x.stroke()} C.hill(x, 880, "#ffb87a", 20)}},
+  {motif: "立蛋大挑戰！雞蛋寶寶站得直挺挺，太陽正當中。", phrase: "午時立蛋", colors: ORANGE, sky: ["#fff4c2", "#ffd27a"], scene(x){
+    C.sun(x, 500, 330, 90, "#ffd84a", {happy: true}); C.egg(x, 500, 640, 230, 300, "#fff8ec", [], {open: true}); x.strokeStyle = OUT; x.lineWidth = 6; x.beginPath(); x.moveTo(240, 790); x.lineTo(760, 790); x.stroke();
+    C.star(x, 250, 560, 40, "#ffd84a", false); C.star(x, 760, 520, 34, "#ffd84a", false); C.hill(x, 870, "#ffb04a", 18)}},
+  {motif: "鴨子寶寶戴著粽子帽，划著小船去吃粽子。", phrase: "端午安康", colors: BLUE, sky: ["#d8f4ff", "#8ad0f0"], scene(x){
+    C.cloud(x, 250, 320, 110); C.cloud(x, 760, 280, 90); C.ball(x, 500, 560, 150, "#ffe066", {happy: true}); rpoly(x, [[600, 560], [700, 585], [600, 610]], 8); ink(x, "#ff9f1c", 4);
+    zongzi(x, 500, 380, 110, {}); x.beginPath(); x.moveTo(230, 680); x.quadraticCurveTo(500, 860, 770, 680); x.closePath(); ink(x, "#e8352b"); wave(x, 790, "#4aa8e0")}},
+]);
+
+/* 中秋節 */
+cartoonSet("midautumn", [
+  {motif: "玉兔捧著月餅，坐在笑咪咪的大月亮前。", phrase: "中秋快樂", colors: NAVY, sky: ["#1f2d66", "#4b5aa8"], scene(x){
+    snowDots(x, 11, 40); fullMoon(x, 500, 430, 220, {happy: true}); C.bunny(x, 330, 720, 110, "#fff", {open: true}); mooncake(x, 640, 740, 95, "月"); C.hill(x, 880, "#3a2a6a", 20)}},
+  {motif: "一盒月餅寶寶排排坐，蛋黃月餅笑得最開心。", phrase: "月圓人圓", colors: BROWN, sky: ["#fff0d0", "#ffcf9a"], scene(x){
+    C.sparkles(x, 4, 16, [80, 230, 920, 820], "#fff"); mooncake(x, 300, 520, 120, null, {}); mooncake(x, 700, 520, 120, null, {happy: true}); mooncake(x, 500, 690, 140, "圓");
+    x.beginPath(); x.roundRect(160, 790, 680, 40, 14); ink(x, "#e8352b")}},
+  {motif: "柚子寶寶戴著柚子皮帽，跟兔子一起烤肉賞月。", phrase: "團圓美滿", colors: NAVY, sky: ["#25306a", "#6a5aa8"], scene(x){
+    snowDots(x, 5, 30); fullMoon(x, 780, 320, 100, {}); C.ball(x, 380, 620, 150, "#c8e86a", {happy: true}); x.beginPath(); x.arc(380, 520, 150, Math.PI*1.1, Math.PI*1.9); x.lineTo(380, 380); x.closePath(); ink(x, "#7cc04a");
+    C.bunny(x, 680, 680, 100, "#fff", {open: true}); x.beginPath(); x.roundRect(520, 790, 320, 40, 10); ink(x, "#666"); C.hill(x, 880, "#3a2a6a", 18)}},
+  {motif: "嫦娥姐姐抱著玉兔，坐在雲朵上看月亮。", phrase: "嫦娥奔月", colors: PURPLE, sky: ["#2a2060", "#8a5aa8"], scene(x){
+    C.sparkles(x, 6, 22, [70, 220, 930, 820], "#ffe8a0"); fullMoon(x, 500, 400, 170, false); C.cloud(x, 500, 720, 260);
+    C.ball(x, 500, 560, 100, "#ffe0c8", {happy: true}); x.beginPath(); x.arc(500, 540, 106, Math.PI, 0); x.lineTo(606, 500); x.quadraticCurveTo(500, 470, 394, 500); x.closePath(); ink(x, "#3b2a3a"); circle(x, 500, 440, 40); ink(x, "#3b2a3a");
+    C.bunny(x, 640, 640, 60, "#fff", {})}},
+  {motif: "兔子提燈籠，跟著一串螢火蟲在月下散步。", phrase: "花好月圓", colors: NAVY, sky: ["#1a2660", "#3a5aa0"], scene(x){
+    fullMoon(x, 720, 330, 120, {happy: true}); C.sparkles(x, 9, 20, [70, 400, 930, 800], "#e8ff8a");
+    C.bunny(x, 380, 630, 130, "#fff", {open: true}); C.lantern(x, 560, 640, 70, "#ff9f1c", "月"); C.hill(x, 850, "#2f4a7a", 30)}},
+]);
+
+/* 重陽節 */
+cartoonSet("chongyang", [
+  {motif: "爺爺奶奶笑呵呵，一起登高看菊花。", phrase: "福壽安康", colors: ORANGE, sky: ["#d8f0ff", "#ffe2a8"], scene(x){
+    C.hill(x, 720, "#8fd07a", 90, 2); C.sun(x, 780, 320, 70, "#ffd84a", {happy: true}); grandpa(x, 380, 560, 110, false); grandpa(x, 620, 560, 110, true);
+    C.mum(x, 200, 800, 70, "#ffcf33"); C.mum(x, 800, 800, 70, "#ffcf33"); C.mum(x, 500, 820, 55, "#ff9f43")}},
+  {motif: "大壽桃寶寶笑開懷，兩旁小壽桃一起祝壽。", phrase: "福壽綿長", colors: PINK, sky: ["#fff0e0", "#ffd0c8"], scene(x){
+    C.sparkles(x, 2, 14, [80, 230, 920, 820], "#fff"); peach(x, 500, 520, 190, {open: true}); peach(x, 240, 720, 100, {happy: true}); peach(x, 760, 720, 100, {}); C.hill(x, 870, "#ffb0a8", 20)}},
+  {motif: "菊花寶寶開成一圈，中央寫著「壽」。", phrase: "菊香延年", colors: ORANGE, sky: ["#fff6d0", "#ffd88a"], scene(x){
+    for(let i = 0; i < 8; i++){const a = i*Math.PI/4; C.mum(x, 500 + Math.cos(a)*260, 520 + Math.sin(a)*240, 62, i%2 ? "#ffcf33" : "#ff9f43", i%2 ? {} : {happy: true})}
+    C.ball(x, 500, 520, 130, "#e8352b", false); C.text(x, "壽", 500, 524, 140, "#ffe08a")}},
+  {motif: "秋高氣爽放風箏，風箏寶寶帶著彩帶飛。", phrase: "康泰安寧", colors: BLUE, sky: ["#bfe6ff", "#e8f6ff"], scene(x){
+    C.cloud(x, 240, 330, 110); C.cloud(x, 760, 420, 90); kite(x, 560, 380, 130); x.strokeStyle = OUT; x.lineWidth = 3; x.beginPath(); x.moveTo(560, 510); x.quadraticCurveTo(450, 650, 330, 730); x.stroke();
+    grandpa(x, 300, 730, 80, false); C.hill(x, 830, "#8fd07a", 40)}},
+  {motif: "一壺菊花茶，茶杯寶寶冒著熱氣，敬老人家。", phrase: "敬老尊賢", colors: BROWN, sky: ["#fff3dc", "#f2d2a8"], scene(x){
+    steam(x, 500, 420, 60); teacup(x, 500, 600, 180, {happy: true}); C.mum(x, 500, 480, 40, "#ffcf33"); C.mum(x, 220, 760, 60, "#ffcf33"); C.mum(x, 790, 760, 60, "#ff9f43");
+    x.beginPath(); x.ellipse(500, 800, 300, 40, 0, 0, Math.PI*2); ink(x, "#c8a070")}},
+]);
+
+/* 冬至 */
+cartoonSet("dongzhi", [
+  {motif: "雪人捧著一碗湯圓，湯圓寶寶熱呼呼。", phrase: "冬至吉祥", colors: BLUE, sky: ["#d0e8ff", "#a8c8f0"], scene(x){
+    snowDots(x, 3, 50); C.snowman(x, 320, 520, 130, {happy: true}); steam(x, 650, 520, 50); tangyuan(x, 610, 650, 50, true, {}); tangyuan(x, 690, 650, 50, false, {happy: true}); bowl(x, 650, 680, 320, "#e8352b"); C.hill(x, 860, "#fff", 30)}},
+  {motif: "一盤胖嘟嘟的餃子寶寶，蘸醬排隊等開動。", phrase: "福氣滿滿", colors: RED, sky: ["#fff2dc", "#ffd2a8"], scene(x){
+    x.beginPath(); x.ellipse(500, 700, 400, 120, 0, 0, Math.PI*2); ink(x, "#5ab0e0"); x.beginPath(); x.ellipse(500, 690, 340, 90, 0, 0, Math.PI*2); ink(x, "#fff");
+    dumpling(x, 350, 640, 110, {}); dumpling(x, 650, 640, 110, {happy: true}); dumpling(x, 500, 600, 130, {open: true}); steam(x, 500, 440, 60)}},
+  {motif: "雪地小屋暖烘烘，煙囪冒煙，屋裡湯圓滾滾香。", phrase: "闔家安康", colors: NAVY, sky: ["#2a3a7a", "#5a6aa8"], scene(x){
+    snowDots(x, 8, 60); x.beginPath(); x.roundRect(300, 500, 400, 300, 16); ink(x, "#e8a060"); rpoly(x, [[260, 520], [500, 330], [740, 520]], 20); ink(x, "#e8352b");
+    x.beginPath(); x.roundRect(600, 360, 60, 110, 8); ink(x, "#a05a3a"); steam(x, 630, 340, 30); x.beginPath(); x.roundRect(440, 600, 120, 120, 14); ink(x, "#ffe08a"); face(x, 500, 660, 40, {happy: true}); C.hill(x, 820, "#fff", 30)}},
+  {motif: "企鵝寶寶圍著暖鍋，冬至吃補暖洋洋。", phrase: "暖意融融", colors: BLUE, sky: ["#d8eeff", "#a0c8f0"], scene(x){
+    snowDots(x, 13, 40); steam(x, 500, 470, 60); x.beginPath(); x.ellipse(500, 640, 210, 120, 0, 0, Math.PI*2); ink(x, "#e8352b"); x.beginPath(); x.ellipse(500, 560, 200, 40, 0, 0, Math.PI*2); ink(x, "#ffb04a");
+    for(const k of [-1, 1]){C.ball(x, 500 + k*300, 620, 100, "#2f3a5a", false); x.beginPath(); x.ellipse(500 + k*300, 650, 65, 70, 0, 0, Math.PI*2); x.fillStyle = "#fff"; x.fill(); face(x, 500 + k*300, 610, 50, {happy: k > 0}); rpoly(x, [[500 + k*300 - 14, 640], [500 + k*300 + 14, 640], [500 + k*300, 660]], 4); ink(x, "#ff9f1c", 3)}
+    C.hill(x, 850, "#fff", 24)}},
+  {motif: "九九消寒梅花開，梅花寶寶一朵比一朵紅。", phrase: "數九迎春", colors: RED, sky: ["#fff4ec", "#ffd8d0"], scene(x){
+    snowDots(x, 6, 25); x.strokeStyle = "#6b4423"; x.lineWidth = 18; x.lineCap = "round"; x.beginPath(); x.moveTo(100, 820); x.quadraticCurveTo(400, 700, 500, 450); x.moveTo(420, 640); x.quadraticCurveTo(650, 600, 860, 380); x.stroke();
+    [[500, 430], [380, 600], [620, 560], [760, 450], [860, 360], [260, 720], [520, 650], [700, 640], [180, 780]].forEach(([cx, cy], i) => C.flower(x, cx, cy, 52, i < 4 ? "#ff6f8f" : "#ffd0da", "#ffd84a", i === 0 ? {happy: true} : false, 5))}},
+]);
+
+/* 聖誕節 */
+cartoonSet("xmas", [
+  {motif: "聖誕樹寶寶戴著星星，禮物堆在樹下。", phrase: "聖誕快樂", colors: GREEN, sky: ["#2a4a7a", "#5a7ab8"], scene(x){
+    snowDots(x, 4, 50); C.xtree(x, 500, 810, 380, {happy: true}); C.gift(x, 260, 760, 150, 110, "#e8352b", "#ffd84a", {}); C.gift(x, 740, 770, 130, 100, "#5ab0ff", "#fff", {happy: true}); C.hill(x, 850, "#fff", 20)}},
+  {motif: "雪人寶寶戴著紅圍巾，跟小鳥在雪地玩。", phrase: "平安夜", colors: NAVY, sky: ["#1f2d66", "#4b5aa8"], scene(x){
+    snowDots(x, 9, 70); C.snowman(x, 500, 520, 150, {happy: true}); C.ball(x, 760, 600, 50, "#e8352b", {}); C.hill(x, 820, "#fff", 30)}},
+  {motif: "麋鹿寶寶紅鼻子亮晶晶，拉著禮物雪橇。", phrase: "歡樂聖誕", colors: RED, sky: ["#ffe8d8", "#ffc8b8"], scene(x){
+    snowDots(x, 5, 30); reindeer(x, 380, 560, 140); x.beginPath(); x.moveTo(560, 640); x.lineTo(860, 640); x.quadraticCurveTo(860, 760, 760, 760); x.lineTo(560, 760); x.closePath(); ink(x, "#e8352b");
+    C.gift(x, 700, 580, 110, 90, "#3fae5a", "#ffd84a", false); C.hill(x, 840, "#fff", 24)}},
+  {motif: "薑餅人手牽手跳舞，糖果柺杖在旁邊。", phrase: "甜蜜聖誕", colors: BROWN, sky: ["#fff3e0", "#ffd8b0"], scene(x){
+    C.sparkles(x, 3, 16, [80, 230, 920, 820], "#fff");
+    for(const cx of [300, 700]){circle(x, cx, 450, 80); ink(x, "#c8803f"); x.beginPath(); x.roundRect(cx - 80, 520, 160, 200, 50); ink(x, "#c8803f"); for(const k of [-1, 1]){x.beginPath(); x.roundRect(cx + k*120 - 30, 540, 60, 120, 30); ink(x, "#c8803f")}
+      face(x, cx, 460, 55, {happy: cx > 500}); x.fillStyle = "#ff5a5a"; for(const d of [570, 630]){circle(x, cx, d, 10); x.fill()}}
+    x.strokeStyle = OUT; x.lineWidth = 34; x.lineCap = "round"; x.beginPath(); x.moveTo(500, 820); x.lineTo(500, 520); x.arc(450, 520, 50, 0, Math.PI, true); x.stroke(); x.strokeStyle = "#fff"; x.lineWidth = 24; x.stroke();
+    x.strokeStyle = "#e8352b"; x.setLineDash([22, 22]); x.stroke(); x.setLineDash([])}},
+  {motif: "聖誕襪掛在壁爐上，裡面塞滿禮物和糖果。", phrase: "好運連連", colors: RED, sky: ["#ffe2c8", "#ffb89a"], scene(x){
+    x.beginPath(); x.roundRect(120, 380, 760, 60, 12); ink(x, "#a05a3a");
+    for(const [cx, c] of [[300, "#e8352b"], [700, "#3fae5a"]]){x.beginPath(); x.moveTo(cx - 70, 440); x.lineTo(cx + 70, 440); x.lineTo(cx + 70, 640); x.quadraticCurveTo(cx + 70, 720, cx - 10, 720); x.lineTo(cx - 90, 720); x.quadraticCurveTo(cx - 150, 720, cx - 150, 670); x.quadraticCurveTo(cx - 150, 620, cx - 70, 620); x.closePath(); ink(x, c);
+      x.beginPath(); x.roundRect(cx - 85, 430, 170, 60, 20); ink(x, "#fff"); face(x, cx, 580, 50, {happy: c === "#3fae5a"})}
+    C.candy(x, 500, 560, 40, "#ff8fd0", .3); C.star(x, 500, 300, 60, "#ffd84a", {happy: true}); C.hill(x, 860, "#ffd0a8", 16)}},
+]);
+
+/* 元旦 */
+cartoonSet("newyear", [
+  {motif: "跨年時鐘寶寶指向十二點，煙火在天空開花。", phrase: "新年快樂", colors: NAVY, sky: ["#1f2d66", "#4b4aa8"], scene(x){
+    fireworkC(x, 220, 340, 110, "#ffd84a"); fireworkC(x, 790, 330, 100, "#ff8fd0"); clock(x, 500, 560, 220); C.hill(x, 860, "#3a3a8a", 20)}},
+  {motif: "太陽寶寶從雲海裡探頭，跟大家說新年好。", phrase: "旭日東昇", colors: ORANGE, sky: ["#ffe8b8", "#ffb87a"], scene(x){
+    C.sun(x, 500, 560, 160, "#ffd84a", {open: true}); C.cloud(x, 250, 760, 200); C.cloud(x, 760, 760, 200); C.cloud(x, 500, 820, 220)}},
+  {motif: "一束彩色氣球帶著新年年份往上飛。", phrase: "萬象更新", colors: BLUE, sky: ["#c8ecff", "#ffe2f0"], scene(x){
+    C.confetti(x, 12, 50, [70, 220, 930, 860], ["#ff5a5a", "#ffd84a", "#5ab0ff", "#7ed957"]);
+    [[300, 420, "#ff5a5a"], [500, 360, "#ffd84a"], [700, 420, "#5ab0ff"], [400, 540, "#7ed957"], [600, 540, "#ff8fd0"]].forEach(([cx, cy, c]) => C.balloon(x, cx, cy, 75, c));
+    C.text(x, String(year), 500, 820, 120, "#e8352b")}},
+  {motif: "嶄新日曆寶寶翻開第一頁，寫著一月一日。", phrase: "一元復始", colors: RED, sky: ["#fff2d8", "#ffd2a0"], scene(x){
+    C.sparkles(x, 3, 16, [80, 230, 920, 820], "#fff"); x.beginPath(); x.roundRect(290, 300, 420, 500, 30); ink(x, "#fff"); x.beginPath(); x.roundRect(290, 300, 420, 130, [30, 30, 0, 0]); ink(x, "#e8352b");
+    for(const k of [-1, 1]){circle(x, 500 + k*120, 300, 22); ink(x, "#ffd84a")} C.text(x, "一月", 500, 368, 64, "#fff");
+    C.text(x, "1", 500, 560, 220, "#e8352b"); face(x, 500, 720, 60, {happy: true})}},
+  {motif: "香檳杯寶寶乾杯，泡泡和彩帶一起跳舞。", phrase: "舉杯同慶", colors: PURPLE, sky: ["#3a2a6a", "#a05aa8"], scene(x){
+    C.confetti(x, 6, 60, [70, 220, 930, 860], ["#ffd84a", "#ff8fd0", "#7ec8ff"]);
+    for(const k of [-1, 1]){x.save(); x.translate(500 + k*130, 560); x.rotate(k*-.25); x.beginPath(); x.moveTo(-90, -170); x.lineTo(90, -170); x.quadraticCurveTo(80, 40, 0, 50); x.quadraticCurveTo(-80, 40, -90, -170); ink(x, "#ffe08a");
+      face(x, 0, -60, 45, {happy: k > 0}); x.beginPath(); x.roundRect(-10, 50, 20, 150, 6); ink(x, "#fff"); x.beginPath(); x.ellipse(0, 205, 70, 18, 0, 0, Math.PI*2); ink(x, "#fff"); x.restore()}
+    for(const [cx, cy] of [[480, 300], [530, 250], [500, 200]]){circle(x, cx, cy, 16); ink(x, "rgba(255,255,255,.4)", 4)}}},
+]);
+
+/* 母親節 */
+cartoonSet("mother", [
+  {motif: "康乃馨寶寶一大束，綁著粉紅蝴蝶結送媽媽。", phrase: "媽媽我愛您", colors: PINK, sky: ["#ffe8f0", "#ffc8da"], scene(x){
+    heartRain(x, 2, 14, ["#ff8fb1", "#fff"]); for(const [cx, cy, c] of [[380, 430, "#ff6f91"], [620, 430, "#ff8fb1"], [500, 360, "#ff4f7a"], [430, 540, "#ffb0c8"], [580, 540, "#ff6f91"]]){x.strokeStyle = "#3f9a52"; x.lineWidth = 10; x.beginPath(); x.moveTo(cx, cy); x.lineTo(500, 780); x.stroke(); C.mum(x, cx, cy, 70, c, cy === 360 ? {happy: true} : false)}
+    rpoly(x, [[400, 700], [600, 700], [550, 830], [450, 830]], 14); ink(x, "#fff3f6"); C.heart(x, 500, 760, 50, "#ff4f7a", false)}},
+  {motif: "小熊寶寶抱著愛心，給熊媽媽一個大擁抱。", phrase: "母愛無疆", colors: PINK, sky: ["#fff0e8", "#ffd0d8"], scene(x){
+    heartRain(x, 5, 10, ["#ff8fb1"]); C.bear(x, 380, 560, 170, "#c8925a", {happy: true}); C.bear(x, 640, 640, 110, "#e0b080", {open: true}); C.heart(x, 560, 760, 70, "#ff4f7a", false); C.hill(x, 870, "#ffb0c8", 20)}},
+  {motif: "草莓蛋糕寶寶插著蠟燭，寫著「謝謝媽媽」。", phrase: "感恩媽媽", colors: PINK, sky: ["#fff4e8", "#ffd8e0"], scene(x){
+    C.sparkles(x, 7, 14, [80, 230, 920, 820], "#fff"); cake(x, 500, 610, 230, {happy: true}); C.text(x, "謝謝媽媽", 500, 810, 64, "#ff4f7a")}},
+  {motif: "愛心氣球飛上天，每顆都寫著對媽媽的愛。", phrase: "媽媽辛苦了", colors: PINK, sky: ["#d8f0ff", "#ffe0ec"], scene(x){
+    C.cloud(x, 220, 760, 140); C.cloud(x, 780, 780, 120);
+    [[300, 440, "#ff6f91"], [500, 360, "#ff4f7a"], [700, 440, "#ff8fb1"]].forEach(([cx, cy, c], i) => {x.strokeStyle = OUT; x.lineWidth = 3; x.beginPath(); x.moveTo(cx, cy + 90); x.quadraticCurveTo(cx - 20, cy + 250, 500, 820); x.stroke(); C.heart(x, cx, cy, 100, c, i === 1 ? {happy: true} : false)});
+    C.text(x, "愛", 300, 440, 70, "#fff"); C.text(x, "愛", 700, 440, 70, "#fff")}},
+  {motif: "花園裡的花朵寶寶全都開了，一起祝媽媽快樂。", phrase: "花開富貴", colors: PINK, sky: ["#e8f8ff", "#fff0f4"], scene(x){
+    C.sun(x, 780, 320, 70, "#ffd84a", {happy: true}); C.hill(x, 680, "#8fd07a", 50, 4);
+    [[200, 640, "#ff6f91"], [380, 600, "#ffb0c8"], [560, 640, "#ff8fb1"], [760, 620, "#ffd0da"], [300, 760, "#ff4f7a"], [660, 770, "#ff6f91"], [480, 800, "#ffb0c8"]].forEach(([cx, cy, c], i) => {
+      x.strokeStyle = "#3f9a52"; x.lineWidth = 8; x.beginPath(); x.moveTo(cx, cy); x.lineTo(cx, cy + 140); x.stroke(); C.flower(x, cx, cy, 55, c, "#ffd84a", i%2 ? false : {happy: i === 2})})}},
+]);
+
+/* 父親節 */
+cartoonSet("father", [
+  {motif: "爸爸的領帶寶寶笑咪咪，旁邊一顆大愛心。", phrase: "爸爸辛苦了", colors: BLUE, sky: ["#d8ecff", "#a8cdf0"], scene(x){
+    C.sparkles(x, 4, 14, [80, 230, 920, 820], "#fff"); tie(x, 400, 520, 230); C.heart(x, 700, 560, 110, "#ff5a5a", {happy: true}); C.hill(x, 870, "#7aa8e0", 20)}},
+  {motif: "熊爸爸揹著熊寶寶，一起去爬山。", phrase: "父愛如山", colors: GREEN, sky: ["#d8f0ff", "#fff2d0"], scene(x){
+    C.hill(x, 620, "#8fd07a", 160, 7); C.sun(x, 780, 310, 70, "#ffd84a", {happy: true}); C.bear(x, 450, 600, 170, "#9b6136", {happy: true}); C.bear(x, 560, 420, 90, "#c8925a", {open: true}); C.hill(x, 850, "#5fb35f", 24)}},
+  {motif: "一杯熱茶寶寶冒著熱氣，請爸爸休息一下。", phrase: "爸爸安康", colors: BROWN, sky: ["#fff3dc", "#f2d2a8"], scene(x){
+    steam(x, 500, 420, 60); teacup(x, 500, 600, 190, {happy: true}); C.leaf(x, 300, 760, 120, -2.6, "#5fb35f"); C.leaf(x, 700, 760, 120, -.5, "#5fb35f"); x.beginPath(); x.ellipse(500, 800, 300, 36, 0, 0, Math.PI*2); ink(x, "#c8a070")}},
+  {motif: "爸爸是超人！披風飄飄的超人寶寶飛上天。", phrase: "最棒的爸爸", colors: NAVY, sky: ["#c8e8ff", "#7cb8f0"], scene(x){
+    C.cloud(x, 230, 720, 140); C.cloud(x, 770, 330, 110); x.beginPath(); x.moveTo(420, 500); x.quadraticCurveTo(250, 650, 200, 820); x.lineTo(440, 700); x.closePath(); ink(x, "#e8352b");
+    C.ball(x, 520, 520, 150, "#ffd9b8", {open: true}); x.beginPath(); x.arc(520, 505, 156, Math.PI*1.05, Math.PI*1.95); x.lineTo(520, 400); x.closePath(); ink(x, OUT); C.star(x, 520, 720, 60, "#ffd84a", false)}},
+  {motif: "工具箱寶寶跟爸爸一起修東西，萬事都搞定。", phrase: "萬事如意", colors: BLUE, sky: ["#fff3dc", "#ffd8a8"], scene(x){
+    x.beginPath(); x.roundRect(260, 520, 480, 250, 24); ink(x, "#e8352b"); x.beginPath(); x.roundRect(400, 450, 200, 90, [30, 30, 0, 0]); x.lineWidth = 22; x.strokeStyle = OUT; x.stroke(); x.lineWidth = 12; x.strokeStyle = "#999"; x.stroke();
+    face(x, 500, 640, 60, {happy: true}); x.save(); x.translate(250, 450); x.rotate(-.6); x.beginPath(); x.roundRect(-14, 0, 28, 200, 10); ink(x, "#c8803f"); x.beginPath(); x.roundRect(-60, -40, 120, 50, 10); ink(x, "#999"); x.restore();
+    C.hill(x, 860, "#ffb04a", 18)}},
+]);
+
+/* 情人節 */
+cartoonSet("valentine", [
+  {motif: "兩顆愛心寶寶依偎在一起，四周飄著小愛心。", phrase: "情人節快樂", colors: PINK, sky: ["#ffe8f0", "#ffc0d4"], scene(x){
+    heartRain(x, 3, 18, ["#ff8fb1", "#fff", "#ff4f7a"]); C.heart(x, 400, 560, 170, "#ff4f7a", {happy: true}); C.heart(x, 620, 590, 140, "#ff8fb1", {open: true}); C.hill(x, 870, "#ffb0c8", 20)}},
+  {motif: "邱比特寶寶拉弓射出愛心箭。", phrase: "愛意滿滿", colors: PINK, sky: ["#e0f2ff", "#ffe0ec"], scene(x){
+    C.cloud(x, 240, 760, 160); C.cloud(x, 780, 740, 140); cupid(x, 360, 520, 130); x.strokeStyle = OUT; x.lineWidth = 7; x.beginPath(); x.moveTo(470, 520); x.lineTo(760, 430); x.stroke(); C.heart(x, 790, 420, 60, "#ff4f7a", false)}},
+  {motif: "一束紅玫瑰寶寶，綁著緞帶送給最愛的人。", phrase: "浪漫情深", colors: RED, sky: ["#fff0ec", "#ffc8c8"], scene(x){
+    heartRain(x, 9, 10, ["#ff8fb1"]); for(const [cx, cy] of [[400, 450], [600, 450], [500, 380], [450, 540], [560, 540]]){x.strokeStyle = "#3f9a52"; x.lineWidth = 10; x.beginPath(); x.moveTo(cx, cy); x.lineTo(500, 800); x.stroke(); rose(x, cx, cy, 62)}
+    face(x, 500, 380, 40, {happy: true}); x.beginPath(); x.ellipse(500, 720, 90, 40, 0, 0, Math.PI*2); ink(x, "#ff8fb1")}},
+  {motif: "愛心巧克力禮盒打開了，巧克力寶寶甜甜笑。", phrase: "甜甜蜜蜜", colors: BROWN, sky: ["#fff0e8", "#ffd0d8"], scene(x){
+    C.sparkles(x, 5, 14, [80, 230, 920, 820], "#fff"); C.heart(x, 500, 560, 260, "#e8352b", false); C.heart(x, 500, 560, 210, "#ffe8ec", false);
+    [[420, 500], [580, 500], [500, 610], [420, 650], [580, 650]].forEach(([cx, cy], i) => C.ball(x, cx, cy, 48, "#7a4026", i === 2 ? {happy: true} : false))}},
+  {motif: "兩隻小鳥寶寶站在樹枝上，中間一顆愛心。", phrase: "比翼雙飛", colors: PINK, sky: ["#e0f4ff", "#fff0f6"], scene(x){
+    x.strokeStyle = "#6b4423"; x.lineWidth = 18; x.lineCap = "round"; x.beginPath(); x.moveTo(80, 700); x.quadraticCurveTo(500, 640, 920, 720); x.stroke();
+    for(const k of [-1, 1]){C.ball(x, 500 + k*170, 590, 90, k < 0 ? "#7ec8ff" : "#ff8fb1", {happy: true}); rpoly(x, [[500 + k*90, 580], [500 + k*60, 595], [500 + k*90, 610]], 4); ink(x, "#ff9f1c", 3)}
+    C.heart(x, 500, 470, 60, "#ff4f7a", false); C.flower(x, 200, 680, 40, "#fff", "#ffd84a"); C.flower(x, 820, 700, 40, "#fff", "#ffd84a")}},
+]);
+
+/* 復活節 */
+cartoonSet("easter", [
+  {motif: "兔子寶寶抱著彩蛋，在草地上蹦蹦跳。", phrase: "復活節快樂", colors: GREEN, sky: ["#d8f2ff", "#fff4d8"], scene(x){
+    C.sun(x, 790, 310, 60, "#ffd84a", {happy: true}); C.hill(x, 720, "#8fd07a", 60, 5); C.bunny(x, 420, 590, 150, "#fff", {open: true});
+    C.egg(x, 640, 720, 130, 170, "#7ec8ff", [[-.15, "#fff"], [.15, "#ffd84a", "dots"]], false); C.flower(x, 180, 800, 40, "#ff8fb1"); C.flower(x, 820, 820, 40, "#fff")}},
+  {motif: "三顆彩蛋寶寶躺在草籃裡，花紋各不相同。", phrase: "春回大地", colors: PURPLE, sky: ["#fff0f8", "#e0d8ff"], scene(x){
+    C.sparkles(x, 8, 14, [80, 230, 920, 600], "#fff");
+    C.egg(x, 340, 560, 170, 230, "#ff8fb1", [[-.2, "#fff"], [.05, "#ffd84a", "dots"], [.25, "#fff"]], {happy: true}); C.egg(x, 660, 560, 170, 230, "#7ed957", [[-.2, "#fff", "dots"], [.1, "#5ab0ff"]], {});
+    C.egg(x, 500, 520, 190, 260, "#ffd84a", [[-.15, "#ff8fb1"], [.15, "#7ec8ff", "dots"]], {open: true});
+    x.beginPath(); x.moveTo(180, 640); x.lineTo(820, 640); x.quadraticCurveTo(800, 840, 500, 840); x.quadraticCurveTo(200, 840, 180, 640); ink(x, "#d9a066")}},
+  {motif: "小雞寶寶剛從彩蛋殼裡探出頭來。", phrase: "新生希望", colors: ORANGE, sky: ["#e8f8ff", "#fff2c8"], scene(x){
+    C.cloud(x, 230, 330, 100); C.chick(x, 500, 540, 130, {open: true});
+    rpoly(x, [[330, 600], [380, 560], [430, 600], [480, 560], [520, 600], [570, 560], [620, 600], [670, 560], [670, 760], [330, 760]], 8); ink(x, "#b8a8ff");
+    C.hill(x, 800, "#8fd07a", 30); C.flower(x, 200, 820, 40, "#fff"); C.flower(x, 800, 820, 40, "#ff8fb1")}},
+  {motif: "彩蛋大搜查！草叢裡藏著好多顆彩蛋。", phrase: "好運滿滿", colors: GREEN, sky: ["#cfeeff", "#e8fbe0"], scene(x){
+    C.sun(x, 210, 320, 60, "#ffd84a", {}); C.hill(x, 640, "#8fd07a", 70, 8);
+    [[200, 700, "#ff8fb1"], [380, 660, "#7ec8ff"], [560, 720, "#ffd84a"], [760, 680, "#b8a8ff"], [300, 800, "#7ed957"], [650, 820, "#ff9f43"]].forEach(([cx, cy, c], i) => C.egg(x, cx, cy, 90, 120, c, [[0, "#fff", i%2 ? "dots" : ""]], i === 2 ? {happy: true} : false));
+    C.bunny(x, 740, 480, 70, "#fff", {happy: true})}},
+  {motif: "鬱金香花園裡，兔子寶寶跟小雞一起野餐。", phrase: "春光明媚", colors: PINK, sky: ["#e0f4ff", "#fff0f4"], scene(x){
+    C.hill(x, 700, "#8fd07a", 50, 9); for(const [cx, c] of [[150, "#ff5a5a"], [270, "#ffd84a"], [730, "#ff8fb1"], [850, "#ff5a5a"]]){x.strokeStyle = "#3f9a52"; x.lineWidth = 8; x.beginPath(); x.moveTo(cx, 620); x.lineTo(cx, 760); x.stroke(); rpoly(x, [[cx - 40, 560], [cx - 20, 590], [cx, 555], [cx + 20, 590], [cx + 40, 560], [cx + 35, 630], [cx - 35, 630]], 10); ink(x, c, 5)}
+    C.bunny(x, 430, 600, 110, "#fff", {happy: true}); C.chick(x, 600, 650, 70, {}); x.beginPath(); x.ellipse(500, 780, 260, 50, 0, 0, Math.PI*2); ink(x, "#ff8fb1")}},
+]);
+
+/* 萬聖節 */
+cartoonSet("halloween", [
+  {motif: "南瓜寶寶戴著巫師帽，一點都不可怕。", phrase: "萬聖節快樂", colors: PURPLE, sky: ["#2a1f4a", "#6a3a8a"], scene(x){
+    C.sparkles(x, 2, 20, [70, 220, 930, 600], "#ffe8a0"); fullMoon(x, 780, 320, 80, false); C.pumpkin(x, 500, 640, 180, "#ff8c1a", {open: true}); witchHat(x, 500, 480, 150); C.hill(x, 860, "#3a2a5a", 20)}},
+  {motif: "小幽靈寶寶飄來飄去，手上提著糖果籃。", phrase: "不給糖就搗蛋", colors: PURPLE, sky: ["#3a2a6a", "#8a5aa8"], scene(x){
+    C.sparkles(x, 5, 18, [70, 220, 930, 820], "#fff"); C.ghost(x, 420, 520, 150, "#fbfbff", {open: true}); C.ghost(x, 720, 450, 80, "#fbfbff", {happy: true});
+    C.candy(x, 300, 780, 40, "#ff8fd0", .4); C.candy(x, 650, 780, 40, "#7ed957", -.3); C.candy(x, 480, 820, 36, "#ffd84a", .1)}},
+  {motif: "黑貓寶寶坐在南瓜旁，月亮上飛過小蝙蝠。", phrase: "古靈精怪", colors: NAVY, sky: ["#1f1f4a", "#4a3a7a"], scene(x){
+    fullMoon(x, 500, 400, 170, {happy: true}); bat(x, 260, 330, 60); bat(x, 760, 290, 50); C.cat(x, 360, 680, 120, "#3a3350", {}); C.pumpkin(x, 640, 720, 110, "#ff8c1a", {happy: true}); C.hill(x, 860, "#2a2a4a", 20)}},
+  {motif: "一堆糖果寶寶從南瓜桶裡滿出來。", phrase: "糖果滿滿", colors: ORANGE, sky: ["#ffe8c8", "#ffb87a"], scene(x){
+    C.confetti(x, 4, 40, [70, 220, 930, 600], ["#7ed957", "#b8a8ff", "#ffd84a"]); [[380, 440, "#ff8fd0"], [520, 400, "#7ed957"], [640, 460, "#5ab0ff"], [460, 500, "#ffd84a"]].forEach(([cx, cy, c], i) => C.candy(x, cx, cy, 42, c, i*.4));
+    C.pumpkin(x, 500, 660, 200, "#ff8c1a", {open: true}); x.strokeStyle = OUT; x.lineWidth = 10; x.beginPath(); x.arc(500, 560, 230, Math.PI*1.15, Math.PI*1.85); x.stroke()}},
+  {motif: "南瓜燈籠一排排亮起來，照亮萬聖夜。", phrase: "歡樂萬聖夜", colors: PURPLE, sky: ["#1f1f4a", "#5a3a8a"], scene(x){
+    C.sparkles(x, 9, 20, [70, 220, 930, 600], "#ffe8a0"); x.strokeStyle = OUT; x.lineWidth = 6; x.beginPath(); x.moveTo(60, 300); x.quadraticCurveTo(500, 380, 940, 300); x.stroke();
+    [[200, 470], [400, 520], [600, 520], [800, 470]].forEach(([cx, cy], i) => {x.strokeStyle = OUT; x.lineWidth = 4; x.beginPath(); x.moveTo(cx, cy - 140); x.lineTo(cx, cy - 80); x.stroke(); C.pumpkin(x, cx, cy, 80, "#ff8c1a", i%2 ? {happy: true} : {open: true})});
+    C.ghost(x, 500, 720, 70, "#fbfbff", {happy: true}); C.hill(x, 860, "#3a2a5a", 20)}},
+]);
+
+/* 感恩節 */
+cartoonSet("thanksgiving", [
+  {motif: "火雞寶寶開屏，彩色羽毛像一把扇子。", phrase: "感恩節快樂", colors: BROWN, sky: ["#fff2d8", "#ffcf9a"], scene(x){
+    const r = rand(5); for(let i = 0; i < 12; i++) C.maple(x, 90 + r()*820, 260 + r()*540, 22 + r()*12, ["#e8553a", "#f39c32", "#f7c948"][i%3], r()*3);
+    C.turkey(x, 500, 600, 200, {happy: true}); C.hill(x, 860, "#d9a066", 20)}},
+  {motif: "南瓜派寶寶熱騰騰出爐，香味飄滿屋。", phrase: "感恩滿懷", colors: ORANGE, sky: ["#fff4e0", "#ffd8b0"], scene(x){
+    steam(x, 500, 470, 60); pie(x, 500, 640, 230, {happy: true}); C.maple(x, 200, 400, 50, "#e8553a", .3); C.maple(x, 800, 420, 46, "#f39c32", -.4)}},
+  {motif: "楓葉寶寶一片片隨風跳舞。", phrase: "秋意濃濃", colors: ORANGE, sky: ["#ffe8c8", "#ffc890"], scene(x){
+    C.maple(x, 500, 540, 200, "#e8553a", -.1, {happy: true}); C.maple(x, 230, 380, 80, "#f39c32", .5, {}); C.maple(x, 780, 400, 90, "#f7c948", -.4, {open: true}); C.maple(x, 260, 740, 70, "#f7c948", .9); C.maple(x, 760, 740, 75, "#e8553a", -.8); C.hill(x, 880, "#d9a066", 16)}},
+  {motif: "豐收的玉米、南瓜和蘋果，擺滿一籃子。", phrase: "五穀豐收", colors: BROWN, sky: ["#fff2d0", "#ffd890"], scene(x){
+    C.sparkles(x, 3, 12, [80, 230, 920, 520], "#fff"); corn(x, 330, 520, 150, -.4); corn(x, 670, 520, 150, .4); C.pumpkin(x, 500, 560, 110, "#ff8c1a", {happy: true}); C.ball(x, 380, 640, 55, "#e8352b", false); C.ball(x, 620, 640, 55, "#7ed957", false);
+    x.beginPath(); x.moveTo(220, 640); x.lineTo(780, 640); x.quadraticCurveTo(760, 840, 500, 840); x.quadraticCurveTo(240, 840, 220, 640); ink(x, "#c8803f")}},
+  {motif: "一家人圍著餐桌，火雞、南瓜派都笑呵呵。", phrase: "闔家團圓", colors: BROWN, sky: ["#fff0dc", "#f2c8a0"], scene(x){
+    x.beginPath(); x.ellipse(500, 700, 400, 110, 0, 0, Math.PI*2); ink(x, "#fff8ec"); C.turkey(x, 500, 560, 120, {open: true}); pie(x, 250, 700, 80, {}); C.pumpkin(x, 760, 690, 60, "#ff8c1a", {happy: true});
+    C.maple(x, 200, 360, 46, "#e8553a", .3); C.maple(x, 800, 340, 40, "#f39c32", -.3)}},
+]);
+})();
 /* ---------- full card ---------- */
 function wrapLines(x,text,maxW,indentPx){
   const lines=[];let line="",first=true;
@@ -3678,7 +4482,7 @@ function wrapLines(x,text,maxW,indentPx){
 }
 function recipient(){const v=$("toSel").value;return v==="__custom"?$("toCustom").value.trim():v}
 function sender(){const v=$("fromSel").value;return v==="__custom"?$("fromIn").value.trim():v}
-function curDesign(f){return f.designs[tplIdx%f.designs.length]}
+function curDesign(f){const l=designsOf(f);return l[tplIdx%l.length]}
 function curPhrase(){const d=curDesign(cur);return phraseOf(Object.assign({},cur,d.phrase?{phrase:d.phrase}:{}))}
 function drawCard(c){
   const d0=curDesign(cur);
@@ -3735,21 +4539,27 @@ function buildYears(){
   const sel=$("yearSel");YEARS.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=`${y} ${ZOD[(y-4)%12]}年`;o.title=`${y} 年（${ganzhi(y)}・${ZOD[(y-4)%12]}年）`;sel.appendChild(o)});
   sel.addEventListener("change",()=>{year=Number(sel.value);buildFestOptions();render(true)});
 }
-// festivals as one dropdown, in date order, each with its date ("冬至 12/22")
+let cat="cn";
+// festivals of the chosen group (中國／西洋), in date order for the chosen year
+function festsOf(c){return FESTS.filter(f=>f.cat===c).sort((a,b)=>TABLE[year][a.id][0]<TABLE[year][b.id][0]?-1:1)}
+// festivals as one dropdown, each with its date ("冬至 12/22")
 function buildFestOptions(){
   const sel=$("festSel");sel.textContent="";
-  [...FESTS].sort((a,b)=>TABLE[year][a.id][0]<TABLE[year][b.id][0]?-1:1).forEach(f=>{
+  festsOf(cat).forEach(f=>{
     const o=document.createElement("option");o.value=f.id;
     const [,m,d]=TABLE[year][f.id][0].split("-").map(Number);o.textContent=`${f.name} ${m}/${d}`;sel.appendChild(o)});
-  if(cur)sel.value=cur.id;
+  if(cur&&cur.cat===cat)sel.value=cur.id;
 }
 $("festSel").addEventListener("change",e=>select(e.target.value));
 function render(anim){
   const c=$("card");drawCard(c);
   // fetch the next landscape photo ahead of time so 換一張 shows it at once
-  const nx=cur.designs[(tplIdx+1)%cur.designs.length];if(nx.photo)photoImg(nx.photo);
+  const list=designsOf(cur),nx=list[(tplIdx+1)%list.length];if(nx.photo)photoImg(nx.photo);
   const o=occ(cur);$("dateNote").textContent=`日期自動帶入：${fmtDate(o.date)}，${o.gz}年 農曆${o.lunar}`;
-  $("motifNote").textContent=`${cur.name}樣板 ${tplIdx%cur.designs.length+1}／${cur.designs.length}：${curDesign(cur).motif}`;
+  $("motifNote").textContent=`${cur.name}${STYLES[styleOf(curDesign(cur))]}圖 ${tplIdx%list.length+1}／${list.length}：${curDesign(cur).motif}`;
+  document.querySelectorAll("#catSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.cat===cat)));
+  document.querySelectorAll("#styleSeg button").forEach(b=>{const n=cur.designs.filter(d=>styleOf(d)===b.dataset.style).length;
+    b.setAttribute("aria-label",`${STYLES[b.dataset.style]}圖（${n}張）`);b.setAttribute("aria-pressed",String(b.dataset.style===artStyle))});
   $("festSel").value=cur.id;
   if(anim){c.classList.remove("flip");void c.offsetWidth;c.classList.add("flip")}
 }
@@ -3799,6 +4609,14 @@ $("menuSave").addEventListener("click",()=>{menus=readMenus();store.set("menus",
 applyMenus();
 $("shuffle").addEventListener("click",()=>{msgIdx++;render(false)});
 $("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
+// 中國節日／西洋節日: show only that group, and pick its next festival from today
+$("catSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.cat===cat)return;
+  cat=b.dataset.cat;const l=festsOf(cat);cur=l.find(f=>dayDiff(TABLE[year][f.id][0])>=0)||l[0];msgIdx=0;tplIdx=0;
+  $("nextNote").textContent="";buildFestOptions();render(true)});
+// 卡通／風景／傳統, remembered on this phone
+$("styleSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.style===artStyle)return;
+  artStyle=b.dataset.style;store.set("style",artStyle);tplIdx=0;render(true)});
+if(STYLES[store.get("style")])artStyle=store.get("style");
 $("copy").addEventListener("click",()=>{
   const text=cardText(),note=$("copyNote");
   navigator.clipboard.writeText(text).then(()=>{note.textContent="已複製，可以貼到 LINE 或訊息裡。"},
@@ -3894,7 +4712,7 @@ if(window.claude){
 }
 if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)dlLabel("看圖","看賀卡圖片並儲存")})();
 
-const def=pickDefault();year=def.y;cur=def.f;
+const def=pickDefault();year=def.y;cur=def.f;cat=cur.cat;
 buildYears();$("yearSel").value=String(year);buildFestOptions();
 if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`:`最近的節日是 ${year} 年${cur.name}，還有 ${def.d} 天，已幫你選好。`;
 render(false);
