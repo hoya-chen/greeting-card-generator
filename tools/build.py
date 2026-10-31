@@ -16,7 +16,7 @@ if a.only:
     files = [f for f in files if os.path.basename(f) == a.only + '.js']
     assert files, 'unknown festival ' + a.only
 parts = [rd(os.path.join(root, 'src/' + n)) for n in ('head.html', 'core.js', 'legacy.js', 'cartoon.js')]
-parts += [rd(f) for f in files]
+parts += [rd(f) for f in files] + [rd(os.path.join(root, 'src/flowers.js'))]
 parts.append(rd(os.path.join(root, 'src/cartoons.js')))  # five cartoon designs per festival
 parts += [rd(os.path.join(root, 'src/app.js')), '</script>\n</body>\n</html>\n']
 open(a.out, 'w', encoding='utf-8').write(''.join(parts))

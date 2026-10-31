@@ -144,7 +144,7 @@ $("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
 $("catSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.cat===cat)return;
   cat=b.dataset.cat;const l=festsOf(cat);cur=l.find(f=>dayDiff(TABLE[year][f.id][0])>=0)||l[0];msgIdx=0;tplIdx=0;
   $("nextNote").textContent="";buildFestOptions();render(true)});
-// 卡通／風景／傳統, remembered on this phone
+// 卡通／風景／花草／傳統, remembered on this phone
 $("styleSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.style===artStyle)return;
   artStyle=b.dataset.style;store.set("style",artStyle);tplIdx=0;render(true)});
 if(STYLES[store.get("style")])artStyle=store.get("style");
@@ -161,7 +161,7 @@ function dlLabel(short,long){$("dlLabel").textContent=short;$("dl").setAttribute
 if(!window.claude&&phone)dlLabel("儲存","儲存或分享賀卡圖片");
 // Viewers who only have the share link are not granted the download capability and the frame blocks
 // download links, so they get the card as a plain image to save with a long press or right click.
-const PHOTO_MISSING="這張風景照還沒下載到，請連上網路後再試一次，或按「換圖」改用其他樣板。";
+const PHOTO_MISSING="這張照片還沒下載到，請連上網路後再試一次，或按「換圖」改用其他樣板。";
 const SAVE_TIP="手機請長按圖片，選「儲存圖片」；電腦請在圖片上按右鍵，選「另存圖片」。";
 // tip: what to do with the picture; lineHref: optional link that sends the greeting text through LINE
 function showImage(blob,tip,lineHref){

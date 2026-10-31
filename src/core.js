@@ -3,10 +3,10 @@ const FESTS = [];
 // festival group shown by the 中國節日／西洋節日 buttons
 const WEST = ["newyear","valentine","easter","mother","father","halloween","thanksgiving","xmas"];
 function registerFest(def){def.cat=WEST.includes(def.id)?"west":"cn";FESTS.push(def)}
-// picture styles: each design is 卡通 (cartoon: true), 風景 (a photo) or 傳統 (the drawn red-and-gold ones)
-const STYLES = {cartoon:"卡通", scenery:"風景", traditional:"傳統"};
+// picture styles: each design is 卡通 (cartoon: true), 風景 (a photo), 花草 (a flower photo, flower: true) or 傳統 (the drawn red-and-gold ones)
+const STYLES = {cartoon:"卡通", scenery:"風景", flower:"花草", traditional:"傳統"};
 let artStyle = "traditional"; // "all" shows every design (used by tools/preview.js)
-function styleOf(d){return d.cartoon?"cartoon":d.photo?"scenery":"traditional"}
+function styleOf(d){return d.cartoon?"cartoon":d.flower?"flower":d.photo?"scenery":"traditional"}
 function designsOf(f){if(artStyle==="all")return f.designs;const l=f.designs.filter(d=>styleOf(d)===artStyle);return l.length?l:f.designs}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
@@ -121,7 +121,7 @@ function photoDesign(o){
       const g = x.createLinearGradient(0, T, 0, B); g.addColorStop(0, f.paper2); g.addColorStop(1, f.paper);
       x.fillStyle = g; x.fillRect(L, T, w, h);
       x.fillStyle = INK; x.globalAlpha = .7; x.font = `38px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
-      x.fillText("風景照載入中……", W / 2, 520); x.globalAlpha = 1;
+      x.fillText((o.flower ? "花草" : "風景") + "照載入中……", W / 2, 520); x.globalAlpha = 1;
     }
     // dark veil behind the title and date, and a fade into the card colour behind the phrase and message
     let g = x.createLinearGradient(0, T, 0, 290); g.addColorStop(0, "rgba(0,0,0,.62)"); g.addColorStop(.5, "rgba(0,0,0,.3)"); g.addColorStop(1, "rgba(0,0,0,0)");

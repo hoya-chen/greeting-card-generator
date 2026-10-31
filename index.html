@@ -64,8 +64,8 @@ header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0
 .seg button:first-child{border-left:0}
 .seg button small{font-size:16px;font-weight:400;opacity:.8;margin-left:4px}
 .seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
-/* 中國／西洋 and 卡通／風景／傳統 share one compact row above the dropdowns */
-.segrow{display:grid;grid-template-columns:2fr 3fr;gap:10px}
+/* 中國／西洋 and 卡通／風景／花草／傳統 share one compact row above the dropdowns */
+.segrow{display:grid;grid-template-columns:1fr 2fr;gap:10px}
 .segrow .seg button{font-size:20px;min-height:50px;padding:4px 2px}
 @media (max-width:380px){.pick select{font-size:18px;padding-left:10px;padding-right:24px;background-position:right 13px top 50%,right 7px top 50%}}
 .field{display:grid;gap:6px}
@@ -149,6 +149,7 @@ a.btn{text-decoration:none;display:inline-block}
       <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
         <button type="button" data-style="cartoon">卡通</button>
         <button type="button" data-style="scenery">風景</button>
+        <button type="button" data-style="flower">花草</button>
         <button type="button" data-style="traditional">傳統</button>
       </div>
     </div>
@@ -212,10 +213,10 @@ const FESTS = [];
 // festival group shown by the 中國節日／西洋節日 buttons
 const WEST = ["newyear","valentine","easter","mother","father","halloween","thanksgiving","xmas"];
 function registerFest(def){def.cat=WEST.includes(def.id)?"west":"cn";FESTS.push(def)}
-// picture styles: each design is 卡通 (cartoon: true), 風景 (a photo) or 傳統 (the drawn red-and-gold ones)
-const STYLES = {cartoon:"卡通", scenery:"風景", traditional:"傳統"};
+// picture styles: each design is 卡通 (cartoon: true), 風景 (a photo), 花草 (a flower photo, flower: true) or 傳統 (the drawn red-and-gold ones)
+const STYLES = {cartoon:"卡通", scenery:"風景", flower:"花草", traditional:"傳統"};
 let artStyle = "traditional"; // "all" shows every design (used by tools/preview.js)
-function styleOf(d){return d.cartoon?"cartoon":d.photo?"scenery":"traditional"}
+function styleOf(d){return d.cartoon?"cartoon":d.flower?"flower":d.photo?"scenery":"traditional"}
 function designsOf(f){if(artStyle==="all")return f.designs;const l=f.designs.filter(d=>styleOf(d)===artStyle);return l.length?l:f.designs}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
@@ -330,7 +331,7 @@ function photoDesign(o){
       const g = x.createLinearGradient(0, T, 0, B); g.addColorStop(0, f.paper2); g.addColorStop(1, f.paper);
       x.fillStyle = g; x.fillRect(L, T, w, h);
       x.fillStyle = INK; x.globalAlpha = .7; x.font = `38px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
-      x.fillText("風景照載入中……", W / 2, 520); x.globalAlpha = 1;
+      x.fillText((o.flower ? "花草" : "風景") + "照載入中……", W / 2, 520); x.globalAlpha = 1;
     }
     // dark veil behind the title and date, and a fade into the card colour behind the phrase and message
     let g = x.createLinearGradient(0, T, 0, 290); g.addColorStop(0, "rgba(0,0,0,.62)"); g.addColorStop(.5, "rgba(0,0,0,.3)"); g.addColorStop(1, "rgba(0,0,0,0)");
@@ -4133,6 +4134,29 @@ FESTS.find(f => f.id === "yuanxiao").designs.push(...photoSet("yuanxiao", [
   ["夜色中靜靜的山巒與雲霧。", "吉祥如意"],
 ]));
 
+/* 花草照樣板：15 張花草照片，每個節日都可以用（樣式「花草」）。照片在 bg/flowers/，來源與授權見 bg/CREDITS.md */
+(() => {
+  const list = [
+    ["盛開的粉紅牡丹。", "花開富貴"],
+    ["荷葉間盛開的蓮花。", "清心自在"],
+    ["紫色的蝴蝶蘭。", "吉祥如意"],
+    ["桃紅色的菊花。", "福壽安康"],
+    ["藍天下的櫻花。", "春風滿面"],
+    ["金黃的向日葵。", "陽光燦爛"],
+    ["紅色的山茶花。", "鴻運當頭"],
+    ["一大球藍色繡球花。", "圓圓滿滿"],
+    ["一叢紅色杜鵑花。", "錦繡前程"],
+    ["紅黃相間的鬱金香。", "喜氣洋洋"],
+    ["枝頭的白玉蘭。", "平安喜樂"],
+    ["垂掛的紫藤花。", "紫氣東來"],
+    ["桃紅色的波斯菊。", "歡喜自在"],
+    ["一朵紅玫瑰。", "幸福美滿"],
+    ["綠葉間的小黃菊。", "天天開心"],
+  ];
+  const designs = list.map(([motif, phrase], i) => photoDesign({flower: true, photo: `flowers/${String(i + 1).padStart(2, "0")}.webp`, motif: "花草照：" + motif, phrase}));
+  FESTS.forEach(f => f.designs.push(...designs));
+})();
+
 /* ---------- 卡通 designs: five per festival (toolkit in src/cartoon.js) ---------- */
 (() => {
 const C = CT, PAL = (paper, paper2, gold) => ({paper, paper2, gold: gold || "#ffe08a"});
@@ -4613,7 +4637,7 @@ $("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
 $("catSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.cat===cat)return;
   cat=b.dataset.cat;const l=festsOf(cat);cur=l.find(f=>dayDiff(TABLE[year][f.id][0])>=0)||l[0];msgIdx=0;tplIdx=0;
   $("nextNote").textContent="";buildFestOptions();render(true)});
-// 卡通／風景／傳統, remembered on this phone
+// 卡通／風景／花草／傳統, remembered on this phone
 $("styleSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.style===artStyle)return;
   artStyle=b.dataset.style;store.set("style",artStyle);tplIdx=0;render(true)});
 if(STYLES[store.get("style")])artStyle=store.get("style");
@@ -4630,7 +4654,7 @@ function dlLabel(short,long){$("dlLabel").textContent=short;$("dl").setAttribute
 if(!window.claude&&phone)dlLabel("儲存","儲存或分享賀卡圖片");
 // Viewers who only have the share link are not granted the download capability and the frame blocks
 // download links, so they get the card as a plain image to save with a long press or right click.
-const PHOTO_MISSING="這張風景照還沒下載到，請連上網路後再試一次，或按「換圖」改用其他樣板。";
+const PHOTO_MISSING="這張照片還沒下載到，請連上網路後再試一次，或按「換圖」改用其他樣板。";
 const SAVE_TIP="手機請長按圖片，選「儲存圖片」；電腦請在圖片上按右鍵，選「另存圖片」。";
 // tip: what to do with the picture; lineHref: optional link that sends the greeting text through LINE
 function showImage(blob,tip,lineHref){

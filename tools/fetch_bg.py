@@ -16,7 +16,7 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BG = os.path.join(root, 'bg')
 W, H, QUALITY = 912, 956, 72
 NAMES = {'spring': '春節', 'yuanxiao': '元宵節', 'duanwu': '端午節', 'midautumn': '中秋節', 'chongyang': '重陽節',
-         'dongzhi': '冬至', 'xmas': '聖誕節', 'newyear': '元旦', 'mother': '母親節', 'father': '父親節', 'valentine': '情人節', 'easter': '復活節', 'halloween': '萬聖節', 'thanksgiving': '感恩節'}
+         'dongzhi': '冬至', 'xmas': '聖誕節', 'newyear': '元旦', 'mother': '母親節', 'father': '父親節', 'valentine': '情人節', 'easter': '復活節', 'halloween': '萬聖節', 'thanksgiving': '感恩節', 'flowers': '花草（所有節日共用）'}
 UA = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36 greeting-card-generator',
       'Referer': 'https://stocksnap.io/'}
 
@@ -42,8 +42,8 @@ def convert(data, fx, fy, zoom):
 def main():
     ap = argparse.ArgumentParser(); ap.add_argument('--force', action='store_true'); a = ap.parse_args()
     src = json.load(open(os.path.join(BG, 'sources.json'), encoding='utf-8'))
-    total, lines = 0, ['# 風景照來源與授權', '',
-                       '賀卡的風景照都是 CC0 或公有領域（Public Domain）的照片，可自由使用、商用，不需要標示作者；',
+    total, lines = 0, ['# 照片來源與授權', '',
+                       '賀卡的風景照與花草照都是 CC0 或公有領域（Public Domain）的照片，可自由使用、商用，不需要標示作者；',
                        '這裡仍列出來源以示感謝。照片由 `tools/fetch_bg.py` 依 `bg/sources.json` 下載並裁切成賀卡尺寸。', '']
     for fest, items in src.items():
         os.makedirs(os.path.join(BG, fest), exist_ok=True)
