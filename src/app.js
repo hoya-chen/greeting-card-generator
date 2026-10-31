@@ -226,7 +226,8 @@ if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`
 render(false);
 // redraw once the web fonts arrive so canvas text uses them
 Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖誕元旦春宵母親端午父中秋福壽安康團圓添歲平喜樂新禧三羊開泰花好月慈恩永念如山金獻瑞家紫燕迎戶歡元宵樂2027"),
-  document.fonts.load(`44px "LXGW WenKai TC"`,"親愛的爸媽爺奶外公婆岳父母各位長輩同學敬上")])
+  document.fonts.load(`44px "LXGW WenKai TC"`,"親愛的爸媽爺奶外公婆岳父母各位長輩同學敬上"),
+  document.fonts.load(`44px "TW-Kai"`,"親愛的")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
 
 // App install (PWA). Only on the real website: the artifact frame has no service worker or install.

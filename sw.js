@@ -1,6 +1,6 @@
 // Offline support for 年節賀卡坊. Bump VERSION whenever index.html or the icons change
 // so phones that installed the app pick up the new version.
-const VERSION = 'v8';
+const VERSION = 'v9';
 const APP = 'app-' + VERSION, FONTS = 'fonts', PHOTOS = 'bg-photos';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
   'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];
@@ -27,9 +27,9 @@ self.addEventListener('fetch', e => {
     return;
   }
   if (url.origin !== location.origin) return;
-  // Landscape photos (bg/): downloaded the first time a card shows one, then kept for offline use.
+  // Landscape photos (bg/) and the TW-Kai font (fonts/): downloaded the first time a card shows one, then kept for offline use.
   // A photo never changes under the same name; a new photo gets a new file name.
-  if (url.pathname.includes('/bg/')) {
+  if (url.pathname.includes('/bg/') || url.pathname.includes('/fonts/')) {
     e.respondWith(caches.open(PHOTOS).then(async c => {
       const hit = await c.match(req);
       if (hit) return hit;

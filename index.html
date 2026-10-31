@@ -17,11 +17,13 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap">
 <style>
+/* 全字庫正楷體 (TW-Kai), the common 5,400 Big5 characters only; rarer characters and Latin letters fall back to LXGW WenKai TC */
+@font-face{font-family:"TW-Kai";src:url("fonts/tw-kai.woff2") format("woff2");font-display:swap;unicode-range:U+2E80-9FFF,U+F900-FAFF,U+FE30-FE4F,U+FF00-FFEF}
 /* Layout: one column on every screen. Settings on top, the card (one canvas, also the download) at the bottom. */
 :root{
   --bg:#f5efee; --fg:#2b1a1b; --muted:#7a5f60; --line:#e2d3d2; --panel:#fffaf9;
   --chip:#efe2e1; --chip-on:#a8231f; --chip-on-fg:#fff6e6; --focus:#c8902c;
-  --display:"DFKai-SB","BiauKai","標楷體","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif;
+  --display:"DFKai-SB","BiauKai","標楷體","TW-Kai","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif;
   --body:var(--display);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
@@ -180,8 +182,8 @@ const FESTS = [];
 function registerFest(def){FESTS.push(def)}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
-// 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use LXGW WenKai TC, a web kai font
-const DISP = '"DFKai-SB","BiauKai","標楷體","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif';
+// 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use TW-Kai (全字庫正楷體, fonts/), then LXGW WenKai TC
+const DISP = '"DFKai-SB","BiauKai","標楷體","TW-Kai","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif';
 const BODY = DISP;
 let cur = null, msgIdx = 0, tplIdx = 0;
 
@@ -3880,7 +3882,8 @@ if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`
 render(false);
 // redraw once the web fonts arrive so canvas text uses them
 Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖誕元旦春宵母親端午父中秋福壽安康團圓添歲平喜樂新禧三羊開泰花好月慈恩永念如山金獻瑞家紫燕迎戶歡元宵樂2027"),
-  document.fonts.load(`44px "LXGW WenKai TC"`,"親愛的爸媽爺奶外公婆岳父母各位長輩同學敬上")])
+  document.fonts.load(`44px "LXGW WenKai TC"`,"親愛的爸媽爺奶外公婆岳父母各位長輩同學敬上"),
+  document.fonts.load(`44px "TW-Kai"`,"親愛的")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
 
 // App install (PWA). Only on the real website: the artifact frame has no service worker or install.

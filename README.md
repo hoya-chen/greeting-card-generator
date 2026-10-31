@@ -67,6 +67,7 @@
 - `src/festivals/<節日>.js`：每個節日各一個檔案，裡面有 10 張樣板的繪圖程式與 20 句吉祥話。要新增樣板或祝賀詞，只要改這個檔案。
 - `tools/preview.js`：預覽單一節日的全部樣板（需要 Playwright），並檢查樣板數、祝賀詞數與長度。
 - `bg/<節日>/01.webp`～`10.webp`：風景照樣板的照片（912×956）。來源、作者與授權列在 `bg/CREDITS.md`；要換照片，改 `bg/sources.json` 後執行 `python3 tools/fetch_bg.py`（刪掉舊檔或加 `--force` 才會重抓），再調整節日檔最後的 `photoSet(...)` 說明與吉祥話。
+- `fonts/tw-kai.woff2`：全字庫正楷體（常用 5400 字），電腦沒有標楷體時用它；再沒有的字改用霞鶩文楷。來源與授權（政府資料開放授權條款第 1 版）列在 `fonts/CREDITS.md`。
 - 因為照片是另外的檔案，直接用瀏覽器打開本機的 `index.html`（file://）時，風景照樣板無法下載成圖片；請用網站，或在資料夾裡執行 `python3 -m http.server` 再開 `http://localhost:8000`。
 - `docs/`：樣板預覽圖。
 - `manifest.webmanifest`、`sw.js`、`icons/`：App 安裝設定、離線快取與圖示。改了 `index.html` 之後，把 `sw.js` 裡的 `VERSION` 加一，已安裝的手機才會更新。圖示由 `tools/icons.js` 產生（需要 Playwright）。

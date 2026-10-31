@@ -3,8 +3,8 @@ const FESTS = [];
 function registerFest(def){FESTS.push(def)}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
-// 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use LXGW WenKai TC, a web kai font
-const DISP = '"DFKai-SB","BiauKai","標楷體","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif';
+// 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use TW-Kai (全字庫正楷體, fonts/), then LXGW WenKai TC
+const DISP = '"DFKai-SB","BiauKai","標楷體","TW-Kai","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif';
 const BODY = DISP;
 let cur = null, msgIdx = 0, tplIdx = 0;
 
