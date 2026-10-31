@@ -94,8 +94,23 @@ a.btn{text-decoration:none;display:inline-block}
 .save-panel{background:var(--panel);color:var(--fg);border-radius:10px;padding:16px;max-width:460px;width:100%;display:grid;gap:12px;justify-items:center}
 .save-panel img{width:100%;height:auto;max-height:70vh;object-fit:contain;border-radius:4px;-webkit-touch-callout:default;user-select:auto}
 .save-panel p{margin:0;font-size:19px;text-align:center}
-.install{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.install[hidden]{display:none}
+/* 安裝 button next to 設定, and the big step-by-step install help */
+.topbtns{display:flex;gap:8px;flex:none}
+.gear.inst{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg);font-weight:700}
+.help-panel{background:var(--panel);color:var(--fg);border-radius:14px;padding:18px 16px;max-width:480px;width:100%;display:grid;gap:12px;align-self:start}
+.help-panel h2:focus{outline:none}
+.help-panel h2{margin:0;font-family:var(--display);font-size:28px;color:var(--chip-on)}
+.help-panel p{margin:0;font-size:19px}
+.help-panel .seg button{font-size:21px;min-height:56px}
+.help-steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.help-steps li{display:grid;grid-template-columns:40px 100px 1fr;gap:10px;align-items:center;font-size:21px;line-height:1.4}
+.help-steps .n{width:40px;height:40px;border-radius:50%;background:var(--chip-on);color:var(--chip-on-fg);display:grid;place-items:center;font-weight:700;font-size:22px}
+.help-steps svg{width:100px;height:72px;border:2px solid var(--line);border-radius:10px;background:#fbf8f7}
+.help-steps svg text{font-family:sans-serif}
+.help-steps img{width:44px;height:44px;border-radius:10px}
+.help-steps b{color:var(--chip-on)}
+.help-done{text-align:center;font-weight:700}
+.help-panel .btn{width:100%}
 .motif{font-size:18px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
 .stage{min-width:0;display:grid;gap:10px;justify-items:center}
 /* round icon buttons right under the card; each has a two-character label for elders */
@@ -126,10 +141,16 @@ a.btn{text-decoration:none;display:inline-block}
   </div>
   <header class="top">
     <h1>年節賀卡坊</h1>
+    <span class="topbtns">
+    <button class="gear inst" id="helpBtn" type="button" aria-haspopup="dialog" aria-label="如何安裝到手機桌面">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M12 7v7M9 11l3 3 3-3M10 18.5h4"/></svg>
+      <span>安裝</span>
+    </button>
     <button class="gear" id="menuBtn" type="button" aria-expanded="false" aria-controls="menuBox" aria-label="設定選單：在長輩的手機上先填好名字">
       <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
       <span>設定</span>
     </button>
+    </span>
   </header>
 
   <section class="controls" aria-label="賀卡設定">
@@ -192,9 +213,38 @@ a.btn{text-decoration:none;display:inline-block}
     <p class="hint status" id="shareNote" role="status"></p>
   </section>
 
-  <div class="group install" id="installBox" hidden>
-    <button class="btn" id="installBtn" type="button" hidden>安裝到手機桌面</button>
-    <p class="hint" id="installNote"></p>
+</div>
+
+<div class="save-box" id="helpBox" role="dialog" aria-modal="true" aria-labelledby="helpTitle" hidden>
+  <div class="help-panel">
+    <h2 id="helpTitle" tabindex="-1">如何裝到手機桌面</h2>
+    <p>裝好後，手機桌面會多一個「賀卡坊」圖示，點一下就能做賀卡，沒有網路也能用。</p>
+    <p class="hint" id="helpSiteNote" hidden>這是預覽版，請先用正式網址 greeting-card-generator.hoya-chen.workers.dev 打開，再照下面的步驟安裝。</p>
+    <p class="help-done" id="helpInstalled" hidden>這支手機已經裝好了，以後從桌面的「賀卡坊」打開就可以。</p>
+    <div class="seg" id="helpSeg" role="group" aria-label="手機種類">
+      <button type="button" data-os="android" aria-pressed="true">安卓手機</button>
+      <button type="button" data-os="ios" aria-pressed="false">iPhone</button>
+    </div>
+    <div id="helpAndroid">
+      <button class="btn primary" id="installBtn" type="button" hidden>一鍵安裝</button>
+      <p class="hint" id="installNote"></p>
+      <ol class="help-steps">
+        <li><span class="n">1</span><svg viewBox="0 0 100 72" aria-hidden="true"><rect x="4" y="6" width="92" height="20" rx="4" fill="#e8e8e8"/><rect x="10" y="11" width="62" height="10" rx="5" fill="#fff"/><circle cx="85" cy="11" r="1.8" fill="#333"/><circle cx="85" cy="16" r="1.8" fill="#333"/><circle cx="85" cy="21" r="1.8" fill="#333"/><circle cx="85" cy="16" r="11" fill="none" stroke="#a8231f" stroke-width="3"/><rect x="10" y="34" width="80" height="32" rx="3" fill="#c8322b"/></svg><span>用 <b>Chrome</b> 打開網站，按右上角的 <b>三個點 ⋮</b></span></li>
+        <li><span class="n">2</span><svg viewBox="0 0 100 72" aria-hidden="true"><rect x="20" y="4" width="76" height="64" rx="4" fill="#fff" stroke="#bbb"/><rect x="26" y="12" width="56" height="5" rx="2" fill="#ccc"/><rect x="26" y="24" width="48" height="5" rx="2" fill="#ccc"/><rect x="23" y="34" width="70" height="16" rx="3" fill="#f6dcd9" stroke="#a8231f" stroke-width="2.5"/><text x="58" y="46" font-size="10" text-anchor="middle" fill="#a8231f" font-weight="700">加到主畫面</text><rect x="26" y="58" width="52" height="5" rx="2" fill="#ccc"/></svg><span>選「<b>加到主畫面</b>」或「<b>安裝應用程式</b>」</span></li>
+        <li><span class="n">3</span><svg viewBox="0 0 100 72" aria-hidden="true"><rect x="8" y="10" width="84" height="52" rx="6" fill="#fff" stroke="#bbb"/><rect x="16" y="18" width="12" height="12" rx="3" fill="#a8231f"/><text x="33" y="28" font-size="9" fill="#333">賀卡坊</text><text x="34" y="54" font-size="9" fill="#666">取消</text><rect x="58" y="43" width="28" height="15" rx="4" fill="#a8231f"/><text x="72" y="54" font-size="9" text-anchor="middle" fill="#fff" font-weight="700">安裝</text></svg><span>再按「<b>安裝</b>」</span></li>
+        <li><span class="n">4</span><img src="icons/icon-192.png" alt=""><span>桌面出現「<b>賀卡坊</b>」，以後點它就能用</span></li>
+      </ol>
+    </div>
+    <div id="helpIos" hidden>
+      <ol class="help-steps">
+        <li><span class="n">1</span><svg viewBox="0 0 100 72" aria-hidden="true"><circle cx="50" cy="36" r="24" fill="#2a8cf0"/><circle cx="50" cy="36" r="20" fill="#fff"/><path d="M50 22 L55 36 L50 50 L45 36Z" fill="#e33"/><path d="M50 36 L55 36 L50 50Z" fill="#999"/><text x="50" y="69" font-size="0">Safari</text></svg><span>一定要用 <b>Safari</b> 打開網站</span></li>
+        <li><span class="n">2</span><svg viewBox="0 0 100 72" aria-hidden="true"><rect x="4" y="44" width="92" height="22" rx="3" fill="#eee"/><text x="14" y="59" font-size="11" fill="#2a8cf0">‹</text><text x="28" y="59" font-size="11" fill="#2a8cf0">›</text><g stroke="#2a8cf0" stroke-width="2" fill="none"><rect x="44" y="51" width="12" height="11" rx="1.5"/><path d="M50 56V46M46.5 49.5 50 46l3.5 3.5"/></g><circle cx="50" cy="54" r="12" fill="none" stroke="#a8231f" stroke-width="3"/><rect x="10" y="6" width="80" height="32" rx="3" fill="#c8322b"/></svg><span>按下方的「<b>分享</b>」鈕（方框加向上箭頭）</span></li>
+        <li><span class="n">3</span><svg viewBox="0 0 100 72" aria-hidden="true"><rect x="4" y="4" width="92" height="64" rx="6" fill="#fff" stroke="#bbb"/><rect x="10" y="12" width="80" height="5" rx="2" fill="#ccc"/><rect x="8" y="26" width="84" height="18" rx="3" fill="#f6dcd9" stroke="#a8231f" stroke-width="2.5"/><text x="14" y="39" font-size="10" fill="#a8231f" font-weight="700">加入主畫面</text><rect x="74" y="29" width="12" height="12" rx="2" fill="none" stroke="#333" stroke-width="1.5"/><path d="M80 32v6M77 35h6" stroke="#333" stroke-width="1.5"/><rect x="10" y="52" width="60" height="5" rx="2" fill="#ccc"/></svg><span>往下滑，選「<b>加入主畫面</b>」</span></li>
+        <li><span class="n">4</span><svg viewBox="0 0 100 72" aria-hidden="true"><rect x="4" y="6" width="92" height="20" rx="4" fill="#eee"/><text x="12" y="20" font-size="10" fill="#2a8cf0">取消</text><text x="80" y="20" font-size="10" text-anchor="middle" fill="#2a8cf0" font-weight="700">新增</text><rect x="68" y="9" width="24" height="14" rx="4" fill="none" stroke="#a8231f" stroke-width="2.5"/><rect x="12" y="34" width="22" height="22" rx="5" fill="#a8231f"/><text x="42" y="49" font-size="10" fill="#333">賀卡坊</text></svg><span>按右上角的「<b>新增</b>」</span></li>
+        <li><span class="n">5</span><img src="icons/icon-192.png" alt=""><span>桌面出現「<b>賀卡坊</b>」，以後點它就能用</span></li>
+      </ol>
+    </div>
+    <button class="btn" id="helpClose" type="button">關閉</button>
   </div>
 </div>
 
@@ -4746,19 +4796,33 @@ Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖
   document.fonts.load(`44px "TW-Kai"`,"親愛的")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
 
+// Install help (安裝 button next to 設定): big steps for Android and iPhone, plus one-tap install where Chrome allows it.
+const installed=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+function helpOS(os){
+  for(const b of $("helpSeg").querySelectorAll("button"))b.setAttribute("aria-pressed",String(b.dataset.os===os));
+  $("helpAndroid").hidden=os!=="android";$("helpIos").hidden=os!=="ios";
+}
+function showHelp(){helpOS(isIOS?"ios":"android");const box=$("helpBox");box.hidden=false;box.scrollTop=0;$("helpTitle").focus({preventScroll:true})}
+function hideHelp(){$("helpBox").hidden=true;$("helpBtn").focus()}
+$("helpBtn").hidden=installed;
+$("helpSiteNote").hidden=!window.claude;
+$("helpBtn").addEventListener("click",showHelp);
+$("helpSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(b)helpOS(b.dataset.os)});
+$("helpClose").addEventListener("click",hideHelp);
+$("helpBox").addEventListener("click",e=>{if(e.target===$("helpBox"))hideHelp()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("helpBox").hidden)hideHelp()});
+
 // App install (PWA). Only on the real website: the artifact frame has no service worker or install.
 if(!window.claude&&"serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
   addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(e=>console.warn("sw",e)));
-  const installed=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  const box=$("installBox"),btn=$("installBtn"),note=$("installNote");
+  const btn=$("installBtn"),note=$("installNote");
   let promptEvt=null;
-  addEventListener("beforeinstallprompt",e=>{e.preventDefault();promptEvt=e;box.hidden=false;btn.hidden=false;
-    note.textContent="裝好後會出現在桌面，沒有網路也能做賀卡。"});
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();promptEvt=e;btn.hidden=false;
+    note.textContent="按上面的「一鍵安裝」最快；不行再照下面的步驟。"});
   btn.addEventListener("click",async()=>{if(!promptEvt)return;promptEvt.prompt();
     const r=await promptEvt.userChoice;promptEvt=null;btn.hidden=true;
-    note.textContent=r.outcome==="accepted"?"已安裝，可以從桌面的「賀卡坊」打開。":"之後想安裝，可以從瀏覽器選單選「加到主畫面」。"});
-  addEventListener("appinstalled",()=>{btn.hidden=true;note.textContent="已安裝，可以從桌面的「賀卡坊」打開。"});
-  if(isIOS&&!installed){box.hidden=false;note.textContent="想裝成 App：用 Safari 打開，按下方「分享」鈕，再選「加入主畫面」。"}
+    note.textContent=r.outcome==="accepted"?"已安裝，可以從桌面的「賀卡坊」打開。":"沒關係，也可以照下面的步驟安裝。"});
+  addEventListener("appinstalled",()=>{btn.hidden=true;$("helpInstalled").hidden=false;note.textContent="";$("helpBtn").hidden=true});
 }
 </script>
 </body>

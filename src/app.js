@@ -253,17 +253,31 @@ Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖
   document.fonts.load(`44px "TW-Kai"`,"親愛的")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
 
+// Install help (安裝 button next to 設定): big steps for Android and iPhone, plus one-tap install where Chrome allows it.
+const installed=matchMedia("(display-mode: standalone)").matches||navigator.standalone===true;
+function helpOS(os){
+  for(const b of $("helpSeg").querySelectorAll("button"))b.setAttribute("aria-pressed",String(b.dataset.os===os));
+  $("helpAndroid").hidden=os!=="android";$("helpIos").hidden=os!=="ios";
+}
+function showHelp(){helpOS(isIOS?"ios":"android");const box=$("helpBox");box.hidden=false;box.scrollTop=0;$("helpTitle").focus({preventScroll:true})}
+function hideHelp(){$("helpBox").hidden=true;$("helpBtn").focus()}
+$("helpBtn").hidden=installed;
+$("helpSiteNote").hidden=!window.claude;
+$("helpBtn").addEventListener("click",showHelp);
+$("helpSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(b)helpOS(b.dataset.os)});
+$("helpClose").addEventListener("click",hideHelp);
+$("helpBox").addEventListener("click",e=>{if(e.target===$("helpBox"))hideHelp()});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!$("helpBox").hidden)hideHelp()});
+
 // App install (PWA). Only on the real website: the artifact frame has no service worker or install.
 if(!window.claude&&"serviceWorker" in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
   addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(e=>console.warn("sw",e)));
-  const installed=matchMedia("(display-mode: standalone)").matches||navigator.standalone;
-  const box=$("installBox"),btn=$("installBtn"),note=$("installNote");
+  const btn=$("installBtn"),note=$("installNote");
   let promptEvt=null;
-  addEventListener("beforeinstallprompt",e=>{e.preventDefault();promptEvt=e;box.hidden=false;btn.hidden=false;
-    note.textContent="裝好後會出現在桌面，沒有網路也能做賀卡。"});
+  addEventListener("beforeinstallprompt",e=>{e.preventDefault();promptEvt=e;btn.hidden=false;
+    note.textContent="按上面的「一鍵安裝」最快；不行再照下面的步驟。"});
   btn.addEventListener("click",async()=>{if(!promptEvt)return;promptEvt.prompt();
     const r=await promptEvt.userChoice;promptEvt=null;btn.hidden=true;
-    note.textContent=r.outcome==="accepted"?"已安裝，可以從桌面的「賀卡坊」打開。":"之後想安裝，可以從瀏覽器選單選「加到主畫面」。"});
-  addEventListener("appinstalled",()=>{btn.hidden=true;note.textContent="已安裝，可以從桌面的「賀卡坊」打開。"});
-  if(isIOS&&!installed){box.hidden=false;note.textContent="想裝成 App：用 Safari 打開，按下方「分享」鈕，再選「加入主畫面」。"}
+    note.textContent=r.outcome==="accepted"?"已安裝，可以從桌面的「賀卡坊」打開。":"沒關係，也可以照下面的步驟安裝。"});
+  addEventListener("appinstalled",()=>{btn.hidden=true;$("helpInstalled").hidden=false;note.textContent="";$("helpBtn").hidden=true});
 }
