@@ -29,7 +29,7 @@ execFileSync('python3', [path.join(__dirname, 'build.py'), '--only', id, '--out'
     dup: FESTS[0].msgs.length - new Set(FESTS[0].msgs).size }));
   const urls = [];
   for (let i = 0; i < info.designs; i++) {
-    await p.evaluate(async i => { tplIdx = i; await photoReady(curDesign(cur)); render(false); }, i);
+    await p.evaluate(async i => { artStyle = "all"; tplIdx = i; await photoReady(curDesign(cur)); render(false); }, i);
     await p.waitForTimeout(120);
     urls.push(await p.$eval('#card', c => c.toDataURL()));
   }
