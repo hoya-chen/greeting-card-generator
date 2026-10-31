@@ -67,18 +67,21 @@ function pickDefault(){
   return {y:YEARS[YEARS.length-1],f:FESTS[0],d:null};
 }
 function buildYears(){
-  const sel=$("yearSel");YEARS.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=`${y} 年（${ganzhi(y)}・${ZOD[(y-4)%12]}年）`;sel.appendChild(o)});
-  sel.addEventListener("change",()=>{year=Number(sel.value);buildChips();render(true)});
+  const sel=$("yearSel");YEARS.forEach(y=>{const o=document.createElement("option");o.value=y;o.textContent=`${y} ${ZOD[(y-4)%12]}年`;o.title=`${y} 年（${ganzhi(y)}・${ZOD[(y-4)%12]}年）`;sel.appendChild(o)});
+  sel.addEventListener("change",()=>{year=Number(sel.value);buildFestOptions();render(true)});
 }
 let cat="cn";
-// festivals of the chosen group, in date order for the chosen year
+// festivals of the chosen group (中國／西洋), in date order for the chosen year
 function festsOf(c){return FESTS.filter(f=>f.cat===c).sort((a,b)=>TABLE[year][a.id][0]<TABLE[year][b.id][0]?-1:1)}
-function buildChips(){
-  const box=$("festChips");box.textContent="";
+// festivals as one dropdown, each with its date ("冬至 12/22")
+function buildFestOptions(){
+  const sel=$("festSel");sel.textContent="";
   festsOf(cat).forEach(f=>{
-    const b=document.createElement("button");b.type="button";b.className="chip";b.dataset.id=f.id;
-    const [,m,d]=TABLE[year][f.id][0].split("-").map(Number);b.innerHTML=`${f.name}<small>${m}/${d}</small>`;b.addEventListener("click",()=>select(f.id));box.appendChild(b)});
+    const o=document.createElement("option");o.value=f.id;
+    const [,m,d]=TABLE[year][f.id][0].split("-").map(Number);o.textContent=`${f.name} ${m}/${d}`;sel.appendChild(o)});
+  if(cur&&cur.cat===cat)sel.value=cur.id;
 }
+$("festSel").addEventListener("change",e=>select(e.target.value));
 function render(anim){
   const c=$("card");drawCard(c);
   // fetch the next landscape photo ahead of time so 換一張 shows it at once
@@ -87,8 +90,8 @@ function render(anim){
   $("motifNote").textContent=`${cur.name}${STYLES[styleOf(curDesign(cur))]}圖 ${tplIdx%list.length+1}／${list.length}：${curDesign(cur).motif}`;
   document.querySelectorAll("#catSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.cat===cat)));
   document.querySelectorAll("#styleSeg button").forEach(b=>{const n=cur.designs.filter(d=>styleOf(d)===b.dataset.style).length;
-    b.innerHTML=`${STYLES[b.dataset.style]}<small>${n}張</small>`;b.setAttribute("aria-pressed",String(b.dataset.style===artStyle))});
-  document.querySelectorAll(".chip").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.id===cur.id)));
+    b.setAttribute("aria-label",`${STYLES[b.dataset.style]}圖（${n}張）`);b.setAttribute("aria-pressed",String(b.dataset.style===artStyle))});
+  $("festSel").value=cur.id;
   if(anim){c.classList.remove("flip");void c.offsetWidth;c.classList.add("flip")}
 }
 function select(id){cur=FESTS.find(f=>f.id===id);msgIdx=0;tplIdx=0;render(true)}
@@ -98,7 +101,7 @@ function cardText(){
   return lines.join("\n");
 }
 
-$("toSel").addEventListener("change",()=>{const cu=$("toSel").value==="__custom";$("toCustom").disabled=!cu;if(cu)$("toCustom").focus();render(false)});
+$("toSel").addEventListener("change",()=>{const cu=$("toSel").value==="__custom";$("toCustomBox").hidden=!cu;if(cu)$("toCustom").focus();render(false)});
 $("toCustom").addEventListener("input",()=>render(false));
 $("fromIn").addEventListener("input",()=>render(false));
 
@@ -120,7 +123,7 @@ function applyMenus(){
   const pick=(()=>{try{return JSON.parse(store.get("pick")||"{}")}catch(e){return {}}})();
   fillSelect($("toSel"),[...menus.to,...BUILTIN_TO.filter(v=>!menus.to.includes(v))],pick.to??$("toSel").value);
   fillSelect($("fromSel"),menus.from,pick.from);
-  $("toCustom").disabled=$("toSel").value!=="__custom";
+  $("toCustomBox").hidden=$("toSel").value!=="__custom";
   $("fromCustomBox").hidden=$("fromSel").value!=="__custom";
   $("menuFrom").value=menus.from.join("\n");$("menuTo").value=menus.to.join("\n");
 }
@@ -128,15 +131,19 @@ const rememberPick=()=>store.set("pick",JSON.stringify({to:$("toSel").value,from
 $("toSel").addEventListener("change",rememberPick);
 $("fromSel").addEventListener("change",()=>{const cu=$("fromSel").value==="__custom";$("fromCustomBox").hidden=!cu;if(cu)$("fromIn").focus();rememberPick();render(false)});
 function readMenus(){return {from:splitNames($("menuFrom").value),to:splitNames($("menuTo").value)}}
+// the gear button opens and closes the 設定選單
+function showMenus(open){$("menuBox").open=open;$("menuBtn").setAttribute("aria-expanded",String(open));if(open)$("menuBox").scrollIntoView({block:"nearest"})}
+$("menuBtn").addEventListener("click",()=>showMenus(!$("menuBox").open));
+$("menuClose").addEventListener("click",()=>{showMenus(false);$("menuBtn").focus()});
 $("menuSave").addEventListener("click",()=>{menus=readMenus();store.set("menus",JSON.stringify(menus));applyMenus();render(false);
-  $("menuNote").textContent="已儲存，這支手機下次打開也會記得。";$("menuBox").open=false});
+  $("menuNote").textContent="已儲存，這支手機下次打開也會記得。";showMenus(false);$("copyNote").textContent="設定選單已儲存。"});
 applyMenus();
 $("shuffle").addEventListener("click",()=>{msgIdx++;render(false)});
 $("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
 // 中國節日／西洋節日: show only that group, and pick its next festival from today
 $("catSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.cat===cat)return;
   cat=b.dataset.cat;const l=festsOf(cat);cur=l.find(f=>dayDiff(TABLE[year][f.id][0])>=0)||l[0];msgIdx=0;tplIdx=0;
-  $("nextNote").textContent="";buildChips();render(true)});
+  $("nextNote").textContent="";buildFestOptions();render(true)});
 // 卡通／風景／傳統, remembered on this phone
 $("styleSeg").addEventListener("click",e=>{const b=e.target.closest("button");if(!b||b.dataset.style===artStyle)return;
   artStyle=b.dataset.style;store.set("style",artStyle);tplIdx=0;render(true)});
@@ -149,10 +156,12 @@ $("copy").addEventListener("click",()=>{
 let downloadsApi=null, lastUrl=null;
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
 const phone=matchMedia("(pointer:coarse)").matches;
-if(!window.claude&&phone)$("dl").textContent="儲存／分享賀卡";
+// the save icon's label and spoken name
+function dlLabel(short,long){$("dlLabel").textContent=short;$("dl").setAttribute("aria-label",long)}
+if(!window.claude&&phone)dlLabel("儲存","儲存或分享賀卡圖片");
 // Viewers who only have the share link are not granted the download capability and the frame blocks
 // download links, so they get the card as a plain image to save with a long press or right click.
-const PHOTO_MISSING="這張風景照還沒下載到，請連上網路後再試一次，或按「換一張」改用其他樣板。";
+const PHOTO_MISSING="這張風景照還沒下載到，請連上網路後再試一次，或按「換圖」改用其他樣板。";
 const SAVE_TIP="手機請長按圖片，選「儲存圖片」；電腦請在圖片上按右鍵，選「另存圖片」。";
 // tip: what to do with the picture; lineHref: optional link that sends the greeting text through LINE
 function showImage(blob,tip,lineHref){
@@ -224,7 +233,7 @@ if(!window.claude){ // the artifact frame blocks share sheets and outside links,
   $("shareBox").hidden=false;
   $("shareLine").addEventListener("click",()=>shareTo("line"));
   $("shareWx").addEventListener("click",()=>shareTo("wx"));
-  if(inWeChat)$("shareNote").textContent="你正在微信裡，按「傳到微信」後長按圖片就能發送給朋友。";
+  if(inWeChat)$("shareNote").textContent="你正在微信裡，按「微信」圖示後長按圖片就能發送給朋友。";
 }
 // In the Claude artifact, point people to the real website (install icon, sharing and offline only work there).
 if(window.claude){
@@ -232,10 +241,10 @@ if(window.claude){
   $("siteCopy").addEventListener("click",()=>{const b=$("siteCopy");
     navigator.clipboard.writeText(SITE_URL).then(()=>{b.textContent="已複製，貼到瀏覽器打開"},()=>{b.textContent="請長按上面的網址複製"})});
 }
-if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)$("dl").textContent="看圖並儲存"})();
+if(window.claude)(async()=>{try{downloadsApi=await window.claude.use("downloads")}catch(e){}if(!downloadsApi)dlLabel("看圖","看賀卡圖片並儲存")})();
 
 const def=pickDefault();year=def.y;cur=def.f;cat=cur.cat;
-buildYears();$("yearSel").value=String(year);buildChips();
+buildYears();$("yearSel").value=String(year);buildFestOptions();
 if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`:`最近的節日是 ${year} 年${cur.name}，還有 ${def.d} 天，已幫你選好。`;
 render(false);
 // redraw once the web fonts arrive so canvas text uses them

@@ -33,13 +33,23 @@
   --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
   --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:20px;line-height:1.6}
-.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(28px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
-header.top{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-header.top h1{font-family:var(--display);font-weight:700;font-size:48px;margin:0;line-height:1.1}
-header.top p{margin:0;color:var(--muted)}
-#yearSel{max-width:260px}
-.controls{display:grid;gap:22px;min-width:0}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(10px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:10px;align-items:start}
+/* compact top: title + gear, then four dropdowns in two rows, so the card shows at first glance on a phone */
+header.top{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0;line-height:1.1}
+.gear{appearance:none;font:inherit;font-size:16px;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:999px;min-height:48px;padding:4px 14px;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
+.gear svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2}
+.gear[aria-expanded="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
+.controls{display:grid;gap:10px;min-width:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.pick{position:relative;min-width:0}
+.pick label{position:absolute;left:13px;top:5px;font-size:14px;line-height:1;color:var(--muted);pointer-events:none}
+.pick select{font:inherit;font-size:20px;width:100%;min-height:60px;padding:20px 30px 4px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);
+  appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted) 50%),linear-gradient(135deg,var(--muted) 50%,transparent 50%);
+  background-position:right 16px top 50%,right 10px top 50%;background-size:6px 6px;background-repeat:no-repeat;text-overflow:ellipsis}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;margin:0}
 .group{display:grid;gap:10px}
 .label{font-size:20px;font-weight:700;letter-spacing:.12em;color:var(--fg)}
 .chips{display:flex;flex-wrap:wrap;gap:10px}
@@ -54,14 +64,19 @@ header.top p{margin:0;color:var(--muted)}
 .seg button:first-child{border-left:0}
 .seg button small{font-size:16px;font-weight:400;opacity:.8;margin-left:4px}
 .seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
+/* 中國／西洋 and 卡通／風景／傳統 share one compact row above the dropdowns */
+.segrow{display:grid;grid-template-columns:2fr 3fr;gap:10px}
+.segrow .seg button{font-size:20px;min-height:50px;padding:4px 2px}
+@media (max-width:380px){.pick select{font-size:18px;padding-left:10px;padding-right:24px;background-position:right 13px top 50%,right 7px top 50%}}
 .field{display:grid;gap:6px}
 .field input,.field select{font:inherit;font-size:20px;min-height:56px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .field textarea{font:inherit;font-size:20px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%;box-sizing:border-box;resize:vertical}
-.menus{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:10px}
-.menus[open]{background:var(--panel)}
-.menus summary{cursor:pointer;color:var(--muted);font-size:19px;padding:8px 0}
-#fromCustomBox[hidden]{display:none}
+.menus{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:10px;background:var(--panel)}
+.menus:not([open]){display:none}
+.menus summary{list-style:none;font-weight:700;font-size:19px;padding:4px 0}
+.menus summary::-webkit-details-marker{display:none}
+#fromCustomBox[hidden],#toCustomBox[hidden]{display:none}
 .actions{display:flex;gap:12px;flex-wrap:wrap}
 .btn{font:inherit;font-size:20px;min-height:56px;padding:12px 22px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
 .btn.primary{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
@@ -82,7 +97,19 @@ a.btn{text-decoration:none;display:inline-block}
 .install{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .install[hidden]{display:none}
 .motif{font-size:18px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
-.stage{min-width:0;display:grid;gap:14px;justify-items:center;border-top:1px solid var(--line);padding-top:28px}
+.stage{min-width:0;display:grid;gap:10px;justify-items:center}
+/* round icon buttons right under the card; each has a two-character label for elders */
+.toolbar{width:100%;max-width:520px;display:flex;justify-content:space-between;gap:2px}
+.shareset{display:contents}.shareset[hidden]{display:none}
+.ic{appearance:none;font:inherit;font-size:16px;line-height:1.2;color:var(--fg);background:none;border:0;padding:0;flex:1 1 0;min-width:0;display:grid;justify-items:center;gap:3px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.ic i{width:clamp(48px,14vw,58px);height:clamp(48px,14vw,58px);border-radius:50%;background:var(--panel);border:1px solid var(--line);display:grid;place-items:center;box-shadow:0 2px 6px rgba(60,10,10,.18)}
+.ic svg{width:28px;height:28px;fill:none;stroke:var(--chip-on);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.ic:active i{transform:scale(.94)}
+.ic.save i{background:var(--chip-on);border-color:var(--chip-on)}.ic.save svg{stroke:#fff;stroke-width:2.4}
+.ic.line i{background:#06a043;border-color:#06a043}.ic.line svg path{fill:#fff;stroke:none}
+.ic.line svg text{fill:#06a043;stroke:none;font:700 5.2px Arial,sans-serif;text-anchor:middle}
+.ic.wx i{background:#1b7a43;border-color:#1b7a43}.ic.wx svg{fill:#fff;stroke:none}.ic.wx .b2{stroke:#1b7a43;stroke-width:1}.ic.wx .eye{fill:#1b7a43}
+.status{width:100%;max-width:520px;text-align:center;white-space:pre-line}.status:empty{display:none}
 #card{width:100%;max-width:520px;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 18px 40px -18px rgba(60,10,10,.55);display:block}
 @media (prefers-reduced-motion:no-preference){
   #card.flip{animation:pop .45s ease-out}
@@ -99,31 +126,36 @@ a.btn{text-decoration:none;display:inline-block}
   </div>
   <header class="top">
     <h1>年節賀卡坊</h1>
-    <p>給家中長輩的傳統喜氣賀卡，每個節日都有專屬樣板。</p>
+    <button class="gear" id="menuBtn" type="button" aria-expanded="false" aria-controls="menuBox" aria-label="設定選單：在長輩的手機上先填好名字">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/></svg>
+      <span>設定</span>
+    </button>
   </header>
 
   <section class="controls" aria-label="賀卡設定">
-    <div class="group">
-      <span class="label">節日類別</span>
+    <details class="menus" id="menuBox">
+      <summary>設定選單：在長輩的手機上先填好名字</summary>
+      <p class="hint">長輩不用打字：拿長輩的手機打開這個網站（或桌面上的賀卡坊），在這裡填好名字按「儲存選單」，這支手機以後就只要用點的選。每行一個，或用「、」隔開。</p>
+      <div class="field"><label for="menuFrom" class="hint">署名選單</label><textarea id="menuFrom" rows="3" placeholder="例如：&#10;小明&#10;小華全家"></textarea></div>
+      <div class="field"><label for="menuTo" class="hint">「送給」另外加的稱呼</label><textarea id="menuTo" rows="2" placeholder="例如：&#10;老同事&#10;各位鄰居"></textarea></div>
+      <div class="actions"><button class="btn primary" id="menuSave" type="button">儲存選單</button><button class="btn" id="menuClose" type="button">關閉</button></div>
+      <p class="hint" id="menuNote"></p>
+    </details>
+    <div class="segrow">
       <div class="seg" id="catSeg" role="group" aria-label="節日類別">
-        <button type="button" data-cat="cn">中國節日</button>
-        <button type="button" data-cat="west">西洋節日</button>
+        <button type="button" data-cat="cn" aria-label="中國節日">中國</button>
+        <button type="button" data-cat="west" aria-label="西洋節日">西洋</button>
+      </div>
+      <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
+        <button type="button" data-style="cartoon">卡通</button>
+        <button type="button" data-style="scenery">風景</button>
+        <button type="button" data-style="traditional">傳統</button>
       </div>
     </div>
-
-    <div class="group">
-      <span class="label">年份與節日</span>
-      <div class="field"><label for="yearSel" class="hint">西元年</label><select id="yearSel"></select></div>
-      <div class="chips" id="festChips" role="group" aria-label="節日"></div>
-      <span class="hint" id="nextNote"></span>
-      <p class="hint" id="dateNote"></p>
-      <p class="motif" id="motifNote"></p>
-    </div>
-
-    <div class="group">
-      <span class="label">稱呼與署名</span>
-      <div class="field">
-        <label for="toSel" class="hint">送給</label>
+    <div class="grid2">
+      <div class="pick"><label for="festSel">節日</label><select id="festSel"></select></div>
+      <div class="pick"><label for="yearSel">年份</label><select id="yearSel"></select></div>
+      <div class="pick"><label for="toSel">送給</label>
         <select id="toSel">
           <option>爸爸媽媽</option>
           <option>爺爺奶奶</option>
@@ -135,55 +167,34 @@ a.btn{text-decoration:none;display:inline-block}
           <option value="__custom">自己輸入…</option>
         </select>
       </div>
-      <div class="row2">
-        <div class="field"><label for="toCustom" class="hint">自訂稱呼</label><input id="toCustom" placeholder="例如：舅舅舅媽" disabled></div>
-        <div class="field"><label for="fromSel" class="hint">署名</label><select id="fromSel"></select></div>
-      </div>
-      <div class="field" id="fromCustomBox" hidden><label for="fromIn" class="hint">自己輸入署名（可留空）</label><input id="fromIn" placeholder="例如：小明敬上"></div>
-      <details class="menus" id="menuBox">
-        <summary>設定選單：在長輩的手機上先填好名字</summary>
-        <p class="hint">長輩不用打字：拿長輩的手機打開這個網站（或桌面上的賀卡坊），在這裡填好名字按「儲存選單」，這支手機以後就只要用點的選。每行一個，或用「、」隔開。</p>
-        <div class="field"><label for="menuFrom" class="hint">署名選單</label><textarea id="menuFrom" rows="3" placeholder="例如：&#10;小明&#10;小華全家"></textarea></div>
-        <div class="field"><label for="menuTo" class="hint">「送給」另外加的稱呼</label><textarea id="menuTo" rows="2" placeholder="例如：&#10;老同事&#10;各位鄰居"></textarea></div>
-        <div class="actions"><button class="btn primary" id="menuSave" type="button">儲存選單</button></div>
-        <p class="hint" id="menuNote"></p>
-      </details>
+      <div class="pick"><label for="fromSel">署名</label><select id="fromSel"></select></div>
     </div>
-
-    <div class="group">
-      <span class="label">圖案風格與祝賀文字</span>
-      <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
-        <button type="button" data-style="cartoon">卡通</button>
-        <button type="button" data-style="scenery">風景</button>
-        <button type="button" data-style="traditional">傳統</button>
-      </div>
-      <div class="actions">
-        <button class="btn" id="swapArt" type="button">換一張</button>
-        <button class="btn" id="shuffle" type="button">換一句</button>
-        <button class="btn" id="copy" type="button">複製祝賀文字</button>
-        <button class="btn primary" id="dl" type="button">下載賀卡圖片</button>
-      </div>
-      <p class="hint" id="copyNote">每個節日有卡通、風景、傳統三種圖可選，共 20 張以上，還有 20 句吉祥話可換。下載的 PNG 和下方預覽一模一樣。</p>
-    </div>
-
-    <div class="group" id="shareBox" hidden>
-      <span class="label">分享給家人</span>
-      <div class="actions">
-        <button class="btn line" id="shareLine" type="button">傳到 LINE</button>
-        <button class="btn wx" id="shareWx" type="button">傳到微信</button>
-      </div>
-      <p class="hint" id="shareNote">把賀卡圖片直接傳到聊天室。</p>
-    </div>
-
-    <div class="group install" id="installBox" hidden>
-      <button class="btn" id="installBtn" type="button" hidden>安裝到手機桌面</button>
-      <p class="hint" id="installNote"></p>
-    </div>
+    <div class="field" id="toCustomBox" hidden><label for="toCustom" class="hint">自己輸入稱呼</label><input id="toCustom" placeholder="例如：舅舅舅媽"></div>
+    <div class="field" id="fromCustomBox" hidden><label for="fromIn" class="hint">自己輸入署名（可留空）</label><input id="fromIn" placeholder="例如：小明敬上"></div>
+    <!-- kept for screen readers; the card itself shows the date -->
+    <p class="sr" id="nextNote"></p><p class="sr" id="dateNote"></p><p class="sr" id="motifNote"></p>
   </section>
 
   <section class="stage" aria-label="賀卡預覽">
     <canvas id="card" width="1000" height="1400" role="img" aria-label="賀卡預覽"></canvas>
+    <div class="toolbar" role="group" aria-label="賀卡功能">
+      <button class="ic" id="swapArt" type="button" aria-label="換一張圖"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M4 18l5-5 4 4 3-3 4 4"/></svg></i><span>換圖</span></button>
+      <button class="ic" id="shuffle" type="button" aria-label="換一句祝賀文字"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 11h16M4 16h9M17 15l3 3-3 3"/></svg></i><span>換句</span></button>
+      <button class="ic" id="copy" type="button" aria-label="複製祝賀文字"><i><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></svg></i><span>複製</span></button>
+      <button class="ic save" id="dl" type="button" aria-label="下載賀卡圖片"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg></i><span id="dlLabel">儲存</span></button>
+      <span class="shareset" id="shareBox" hidden>
+        <button class="ic line" id="shareLine" type="button" aria-label="傳到 LINE"><i><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3C6.5 3 2 6.6 2 11c0 4 3.6 7.3 8.4 7.9.3.1.8.2.9.5.1.3 0 .7 0 1l-.1.9c0 .3-.2 1 .9.5s6-3.5 8.2-6C21.4 14.4 22 12.8 22 11c0-4.4-4.5-8-10-8z"/><text x="12" y="13.3">LINE</text></svg></i><span>LINE</span></button>
+        <button class="ic wx" id="shareWx" type="button" aria-label="傳到微信"><i><svg viewBox="0 0 24 24" aria-hidden="true"><ellipse cx="9.5" cy="10" rx="7" ry="5.6"/><ellipse class="b2" cx="15.5" cy="14.5" rx="6" ry="4.8"/><circle class="eye" cx="7.3" cy="8.8" r=".9"/><circle class="eye" cx="11.6" cy="8.8" r=".9"/></svg></i><span>微信</span></button>
+      </span>
+    </div>
+    <p class="hint status" id="copyNote" role="status"></p>
+    <p class="hint status" id="shareNote" role="status"></p>
   </section>
+
+  <div class="group install" id="installBox" hidden>
+    <button class="btn" id="installBtn" type="button" hidden>安裝到手機桌面</button>
+    <p class="hint" id="installNote"></p>
+  </div>
 </div>
 
 <div class="save-box" id="saveBox" role="dialog" aria-modal="true" aria-label="儲存賀卡圖片" hidden>
