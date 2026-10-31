@@ -15,14 +15,14 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Serif+TC:wght@400;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&display=swap">
 <style>
 /* Layout: one column on every screen. Settings on top, the card (one canvas, also the download) at the bottom. */
 :root{
   --bg:#f5efee; --fg:#2b1a1b; --muted:#7a5f60; --line:#e2d3d2; --panel:#fffaf9;
   --chip:#efe2e1; --chip-on:#a8231f; --chip-on-fg:#fff6e6; --focus:#c8902c;
-  --display:"LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif;
-  --body:"Noto Serif TC","PMingLiU","Songti TC",serif;
+  --display:"DFKai-SB","BiauKai","標楷體","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif;
+  --body:var(--display);
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
@@ -31,33 +31,33 @@
   --bg:#181112; --fg:#f2e6e4; --muted:#b39c9b; --line:#3a2a2b; --panel:#211819;
   --chip:#2e2122; --chip-on:#c23a2f; --chip-on-fg:#fff6e6; --focus:#e0b04a; color-scheme:dark}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.6}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:20px;line-height:1.6}
 .wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:max(28px,env(safe-area-inset-top)) max(48px,env(safe-area-inset-bottom));display:grid;grid-template-columns:minmax(0,1fr);gap:28px;align-items:start}
 header.top{grid-column:1/-1;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
-header.top h1{font-family:var(--display);font-weight:700;font-size:40px;margin:0;line-height:1.1}
+header.top h1{font-family:var(--display);font-weight:700;font-size:48px;margin:0;line-height:1.1}
 header.top p{margin:0;color:var(--muted)}
 #yearSel{max-width:260px}
 .controls{display:grid;gap:22px;min-width:0}
 .group{display:grid;gap:10px}
-.label{font-size:13px;letter-spacing:.12em;color:var(--muted)}
-.chips{display:flex;flex-wrap:wrap;gap:8px}
-.chip{appearance:none;border:1px solid var(--line);background:var(--chip);color:var(--fg);font:inherit;font-size:14px;padding:6px 12px;border-radius:999px;cursor:pointer;display:inline-flex;gap:6px;align-items:baseline}
-.chip small{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.label{font-size:20px;font-weight:700;letter-spacing:.12em;color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--chip);color:var(--fg);font:inherit;font-size:20px;min-height:52px;padding:8px 18px;border-radius:999px;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.chip small{font-size:16px;color:var(--muted);font-variant-numeric:tabular-nums}
 .chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 .chip[aria-pressed="true"] small{color:var(--chip-on-fg);opacity:.8}
 .chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .field{display:grid;gap:6px}
-.field input,.field select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
+.field input,.field select{font:inherit;font-size:20px;min-height:56px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.field textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%;box-sizing:border-box;resize:vertical}
+.field textarea{font:inherit;font-size:20px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%;box-sizing:border-box;resize:vertical}
 .menus{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:10px}
 .menus[open]{background:var(--panel)}
-.menus summary{cursor:pointer;color:var(--muted);font-size:14px}
+.menus summary{cursor:pointer;color:var(--muted);font-size:19px;padding:8px 0}
 #fromCustomBox[hidden]{display:none}
-.actions{display:flex;gap:10px;flex-wrap:wrap}
-.btn{font:inherit;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
+.actions{display:flex;gap:12px;flex-wrap:wrap}
+.btn{font:inherit;font-size:20px;min-height:56px;padding:12px 22px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
 .btn.primary{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
-.hint{font-size:13px;color:var(--muted);margin:0}
+.hint{font-size:18px;color:var(--muted);margin:0}
 /* share buttons: darker brand greens so white text stays readable */
 .btn.line{background:#058c3c;border-color:#058c3c;color:#fff;font-weight:600}
 .btn.wx{background:#1b7a43;border-color:#1b7a43;color:#fff;font-weight:600}
@@ -70,10 +70,10 @@ a.btn{text-decoration:none;display:inline-block}
 .save-box[hidden]{display:none}
 .save-panel{background:var(--panel);color:var(--fg);border-radius:10px;padding:16px;max-width:460px;width:100%;display:grid;gap:12px;justify-items:center}
 .save-panel img{width:100%;height:auto;max-height:70vh;object-fit:contain;border-radius:4px;-webkit-touch-callout:default;user-select:auto}
-.save-panel p{margin:0;font-size:14px;text-align:center}
+.save-panel p{margin:0;font-size:19px;text-align:center}
 .install{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .install[hidden]{display:none}
-.motif{font-size:13px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
+.motif{font-size:18px;color:var(--muted);margin:0;border-left:2px solid var(--line);padding-left:10px}
 .stage{min-width:0;display:grid;gap:14px;justify-items:center;border-top:1px solid var(--line);padding-top:28px}
 #card{width:100%;max-width:520px;height:auto;aspect-ratio:5/7;border-radius:6px;box-shadow:0 18px 40px -18px rgba(60,10,10,.55);display:block}
 @media (prefers-reduced-motion:no-preference){
@@ -180,8 +180,9 @@ const FESTS = [];
 function registerFest(def){FESTS.push(def)}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
-const DISP = '"LXGW WenKai TC","Kaiti TC","KaiTi",serif';
-const BODY = '"Noto Serif TC","PMingLiU",serif';
+// 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use LXGW WenKai TC, a web kai font
+const DISP = '"DFKai-SB","BiauKai","標楷體","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif';
+const BODY = DISP;
 let cur = null, msgIdx = 0, tplIdx = 0;
 
 const CN="〇一二三四五六七八九";
@@ -289,7 +290,7 @@ function photoDesign(o){
     } else {
       const g = x.createLinearGradient(0, T, 0, B); g.addColorStop(0, f.paper2); g.addColorStop(1, f.paper);
       x.fillStyle = g; x.fillRect(L, T, w, h);
-      x.fillStyle = INK; x.globalAlpha = .7; x.font = `30px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillStyle = INK; x.globalAlpha = .7; x.font = `38px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
       x.fillText("風景照載入中……", W / 2, 520); x.globalAlpha = 1;
     }
     // dark veil behind the title and date, and a fade into the card colour behind the phrase and message
@@ -3690,19 +3691,25 @@ function drawCard(c){
     x.fillStyle=f.gold;circle(x,18,14,2);x.fill();x.restore()};
   corner(16,16,1,1);corner(W-16,16,-1,1);corner(16,H-16,1,-1);corner(W-16,H-16,-1,-1);
   // header
-  x.fillStyle=f.gold;x.textBaseline="top";x.textAlign="left";x.font=`700 60px ${DISP}`;x.fillText(f.name,96,92);
-  x.fillStyle=INK;x.globalAlpha=.85;x.textAlign="right";x.font=`26px ${BODY}`;const o=occ(f);x.fillText(fmtDate(o.date),904,100);
-  x.font=`24px ${BODY}`;x.fillText(`${o.gz}年　農曆${o.lunar}`,904,138);x.globalAlpha=1;
+  x.fillStyle=f.gold;x.textBaseline="top";x.textAlign="left";x.font=`700 72px ${DISP}`;x.fillText(f.name,96,86);
+  x.fillStyle=INK;x.globalAlpha=.85;x.textAlign="right";x.font=`700 36px ${BODY}`;const o=occ(f);x.fillText(fmtDate(o.date),904,92);
+  x.font=`32px ${BODY}`;x.fillText(`${o.gz}年　農曆${o.lunar}`,904,140);x.globalAlpha=1;
   // message panel
-  x.fillStyle="rgba(0,0,0,.18)";x.fillRect(80,975,W-160,350);
-  x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=1.5;x.strokeRect(80,975,W-160,350);x.globalAlpha=1;
+  const PT=965,PB=1335;
+  x.fillStyle="rgba(0,0,0,.18)";x.fillRect(80,PT,W-160,PB-PT);
+  x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=1.5;x.strokeRect(80,PT,W-160,PB-PT);x.globalAlpha=1;
   x.textAlign="left";x.textBaseline="alphabetic";x.fillStyle=INK;
-  const L=120,maxW=W-2*L,lh=62;let y=1045;
-  const to=recipient(),from=sender(),msg=msgOf(f);
-  if(to){x.font=`600 34px ${BODY}`;x.fillText(`親愛的${to}：`,L,y);y+=lh}
-  x.font=`34px ${BODY}`;
-  for(const ln of wrapLines(x,msg,maxW,68)){x.fillText(ln.t,ln.first?L+68:L,y);y+=lh}
-  if(from){x.font=`600 34px ${BODY}`;x.textAlign="right";x.fillText(from,W-L,Math.max(y+4,1295))}
+  // big text for elders; shrink only when a long (typed) message would overflow the panel
+  const L=110,maxW=W-2*L,to=recipient(),from=sender(),msg=msgOf(f);
+  let size=48,lines;
+  for(;size>30;size-=2){x.font=`${size}px ${BODY}`;lines=wrapLines(x,msg,maxW,size*2);
+    const rows=lines.length+(to?1:0)+(from?1:0);if(PT+size*1.25+(rows-1)*size*1.45<=PB-24)break}
+  x.font=`${size}px ${BODY}`;lines=wrapLines(x,msg,maxW,size*2);
+  const lh=Math.round(size*1.45);let y=PT+size*1.25;
+  if(to){x.font=`700 ${size}px ${BODY}`;x.fillText(`親愛的${to}：`,L,y);y+=lh}
+  x.font=`${size}px ${BODY}`;
+  for(const ln of lines){x.fillText(ln.t,ln.first?L+size*2:L,y);y+=lh}
+  if(from){x.font=`700 ${size}px ${BODY}`;x.textAlign="right";x.fillText(from,W-L,Math.max(y,PB-24))}
   c.setAttribute("aria-label",`${year} ${f.name}賀卡：${phraseOf(f)}。${to?"親愛的"+to+"："+" ":""}${msg}${from?" "+from:""}`);
 }
 
@@ -3873,7 +3880,7 @@ if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`
 render(false);
 // redraw once the web fonts arrive so canvas text uses them
 Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖誕元旦春宵母親端午父中秋福壽安康團圓添歲平喜樂新禧三羊開泰花好月慈恩永念如山金獻瑞家紫燕迎戶歡元宵樂2027"),
-  document.fonts.load(`34px "Noto Serif TC"`,"親愛的"),document.fonts.load(`600 34px "Noto Serif TC"`,"親愛的")])
+  document.fonts.load(`44px "LXGW WenKai TC"`,"親愛的爸媽爺奶外公婆岳父母各位長輩同學敬上")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
 
 // App install (PWA). Only on the real website: the artifact frame has no service worker or install.

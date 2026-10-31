@@ -37,19 +37,25 @@ function drawCard(c){
     x.fillStyle=f.gold;circle(x,18,14,2);x.fill();x.restore()};
   corner(16,16,1,1);corner(W-16,16,-1,1);corner(16,H-16,1,-1);corner(W-16,H-16,-1,-1);
   // header
-  x.fillStyle=f.gold;x.textBaseline="top";x.textAlign="left";x.font=`700 60px ${DISP}`;x.fillText(f.name,96,92);
-  x.fillStyle=INK;x.globalAlpha=.85;x.textAlign="right";x.font=`26px ${BODY}`;const o=occ(f);x.fillText(fmtDate(o.date),904,100);
-  x.font=`24px ${BODY}`;x.fillText(`${o.gz}年　農曆${o.lunar}`,904,138);x.globalAlpha=1;
+  x.fillStyle=f.gold;x.textBaseline="top";x.textAlign="left";x.font=`700 72px ${DISP}`;x.fillText(f.name,96,86);
+  x.fillStyle=INK;x.globalAlpha=.85;x.textAlign="right";x.font=`700 36px ${BODY}`;const o=occ(f);x.fillText(fmtDate(o.date),904,92);
+  x.font=`32px ${BODY}`;x.fillText(`${o.gz}年　農曆${o.lunar}`,904,140);x.globalAlpha=1;
   // message panel
-  x.fillStyle="rgba(0,0,0,.18)";x.fillRect(80,975,W-160,350);
-  x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=1.5;x.strokeRect(80,975,W-160,350);x.globalAlpha=1;
+  const PT=965,PB=1335;
+  x.fillStyle="rgba(0,0,0,.18)";x.fillRect(80,PT,W-160,PB-PT);
+  x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=1.5;x.strokeRect(80,PT,W-160,PB-PT);x.globalAlpha=1;
   x.textAlign="left";x.textBaseline="alphabetic";x.fillStyle=INK;
-  const L=120,maxW=W-2*L,lh=62;let y=1045;
-  const to=recipient(),from=sender(),msg=msgOf(f);
-  if(to){x.font=`600 34px ${BODY}`;x.fillText(`親愛的${to}：`,L,y);y+=lh}
-  x.font=`34px ${BODY}`;
-  for(const ln of wrapLines(x,msg,maxW,68)){x.fillText(ln.t,ln.first?L+68:L,y);y+=lh}
-  if(from){x.font=`600 34px ${BODY}`;x.textAlign="right";x.fillText(from,W-L,Math.max(y+4,1295))}
+  // big text for elders; shrink only when a long (typed) message would overflow the panel
+  const L=110,maxW=W-2*L,to=recipient(),from=sender(),msg=msgOf(f);
+  let size=48,lines;
+  for(;size>30;size-=2){x.font=`${size}px ${BODY}`;lines=wrapLines(x,msg,maxW,size*2);
+    const rows=lines.length+(to?1:0)+(from?1:0);if(PT+size*1.25+(rows-1)*size*1.45<=PB-24)break}
+  x.font=`${size}px ${BODY}`;lines=wrapLines(x,msg,maxW,size*2);
+  const lh=Math.round(size*1.45);let y=PT+size*1.25;
+  if(to){x.font=`700 ${size}px ${BODY}`;x.fillText(`親愛的${to}：`,L,y);y+=lh}
+  x.font=`${size}px ${BODY}`;
+  for(const ln of lines){x.fillText(ln.t,ln.first?L+size*2:L,y);y+=lh}
+  if(from){x.font=`700 ${size}px ${BODY}`;x.textAlign="right";x.fillText(from,W-L,Math.max(y,PB-24))}
   c.setAttribute("aria-label",`${year} ${f.name}賀卡：${phraseOf(f)}。${to?"親愛的"+to+"："+" ":""}${msg}${from?" "+from:""}`);
 }
 
@@ -220,7 +226,7 @@ if(def.d!==null)$("nextNote").textContent=def.d===0?`今天就是${cur.name}！`
 render(false);
 // redraw once the web fonts arrive so canvas text uses them
 Promise.all([document.fonts.load(`700 60px "LXGW WenKai TC"`,"重陽節冬至聖誕元旦春宵母親端午父中秋福壽安康團圓添歲平喜樂新禧三羊開泰花好月慈恩永念如山金獻瑞家紫燕迎戶歡元宵樂2027"),
-  document.fonts.load(`34px "Noto Serif TC"`,"親愛的"),document.fonts.load(`600 34px "Noto Serif TC"`,"親愛的")])
+  document.fonts.load(`44px "LXGW WenKai TC"`,"親愛的爸媽爺奶外公婆岳父母各位長輩同學敬上")])
   .catch(()=>{}).then(()=>document.fonts.ready).then(()=>render(false));
 
 // App install (PWA). Only on the real website: the artifact frame has no service worker or install.

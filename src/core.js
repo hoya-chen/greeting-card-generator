@@ -3,8 +3,9 @@ const FESTS = [];
 function registerFest(def){FESTS.push(def)}
 const $ = id => document.getElementById(id);
 const W = 1000, H = 1400;
-const DISP = '"LXGW WenKai TC","Kaiti TC","KaiTi",serif';
-const BODY = '"Noto Serif TC","PMingLiU",serif';
+// 標楷體 first (Windows: DFKai-SB, Mac: BiauKai); phones without it use LXGW WenKai TC, a web kai font
+const DISP = '"DFKai-SB","BiauKai","標楷體","LXGW WenKai TC","Kaiti TC","STKaiti","KaiTi",serif';
+const BODY = DISP;
 let cur = null, msgIdx = 0, tplIdx = 0;
 
 const CN="〇一二三四五六七八九";
@@ -112,7 +113,7 @@ function photoDesign(o){
     } else {
       const g = x.createLinearGradient(0, T, 0, B); g.addColorStop(0, f.paper2); g.addColorStop(1, f.paper);
       x.fillStyle = g; x.fillRect(L, T, w, h);
-      x.fillStyle = INK; x.globalAlpha = .7; x.font = `30px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
+      x.fillStyle = INK; x.globalAlpha = .7; x.font = `38px ${BODY}`; x.textAlign = "center"; x.textBaseline = "middle";
       x.fillText("風景照載入中……", W / 2, 520); x.globalAlpha = 1;
     }
     // dark veil behind the title and date, and a fade into the card colour behind the phrase and message
