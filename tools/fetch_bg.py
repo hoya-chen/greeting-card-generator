@@ -16,7 +16,7 @@ root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BG = os.path.join(root, 'bg')
 W, H, QUALITY = 912, 956, 72
 NAMES = {'spring': '春節', 'yuanxiao': '元宵節', 'duanwu': '端午節', 'midautumn': '中秋節', 'chongyang': '重陽節',
-         'dongzhi': '冬至', 'xmas': '聖誕節', 'newyear': '元旦', 'mother': '母親節', 'father': '父親節'}
+         'dongzhi': '冬至', 'xmas': '聖誕節', 'newyear': '元旦', 'mother': '母親節', 'father': '父親節', 'valentine': '情人節', 'easter': '復活節', 'halloween': '萬聖節', 'thanksgiving': '感恩節'}
 UA = {'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 Chrome/120 Safari/537.36 greeting-card-generator',
       'Referer': 'https://stocksnap.io/'}
 

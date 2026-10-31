@@ -48,6 +48,12 @@ header.top p{margin:0;color:var(--muted)}
 .chip[aria-pressed="true"]{background:var(--chip-on);border-color:var(--chip-on);color:var(--chip-on-fg)}
 .chip[aria-pressed="true"] small{color:var(--chip-on-fg);opacity:.8}
 .chip:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+/* big two- or three-way switch (節日類別, 圖案風格) */
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:2px solid var(--chip-on);border-radius:12px;overflow:hidden}
+.seg button{appearance:none;border:0;border-left:2px solid var(--chip-on);background:var(--panel);color:var(--fg);font:inherit;font-size:22px;font-weight:700;min-height:60px;padding:8px 6px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button small{font-size:16px;font-weight:400;opacity:.8;margin-left:4px}
+.seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
 .field{display:grid;gap:6px}
 .field input,.field select{font:inherit;font-size:20px;min-height:56px;padding:10px 14px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
@@ -98,6 +104,14 @@ a.btn{text-decoration:none;display:inline-block}
 
   <section class="controls" aria-label="賀卡設定">
     <div class="group">
+      <span class="label">節日類別</span>
+      <div class="seg" id="catSeg" role="group" aria-label="節日類別">
+        <button type="button" data-cat="cn">中國節日</button>
+        <button type="button" data-cat="west">西洋節日</button>
+      </div>
+    </div>
+
+    <div class="group">
       <span class="label">年份與節日</span>
       <div class="field"><label for="yearSel" class="hint">西元年</label><select id="yearSel"></select></div>
       <div class="chips" id="festChips" role="group" aria-label="節日"></div>
@@ -137,14 +151,19 @@ a.btn{text-decoration:none;display:inline-block}
     </div>
 
     <div class="group">
-      <span class="label">祝賀文字</span>
+      <span class="label">圖案風格與祝賀文字</span>
+      <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
+        <button type="button" data-style="cartoon">卡通</button>
+        <button type="button" data-style="scenery">風景</button>
+        <button type="button" data-style="traditional">傳統</button>
+      </div>
       <div class="actions">
         <button class="btn" id="swapArt" type="button">換一張</button>
         <button class="btn" id="shuffle" type="button">換一句</button>
         <button class="btn" id="copy" type="button">複製祝賀文字</button>
         <button class="btn primary" id="dl" type="button">下載賀卡圖片</button>
       </div>
-      <p class="hint" id="copyNote">每個節日有 10 張圖、20 句吉祥話可換。下載的 PNG 和下方預覽一模一樣。</p>
+      <p class="hint" id="copyNote">每個節日有卡通、風景、傳統三種圖可選，共 20 張以上，還有 20 句吉祥話可換。下載的 PNG 和下方預覽一模一樣。</p>
     </div>
 
     <div class="group" id="shareBox" hidden>
