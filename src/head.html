@@ -49,6 +49,11 @@ header.top p{margin:0;color:var(--muted)}
 .field{display:grid;gap:6px}
 .field input,.field select{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--fg);width:100%;box-sizing:border-box;resize:vertical}
+.menus{border:1px dashed var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:10px}
+.menus[open]{background:var(--panel)}
+.menus summary{cursor:pointer;color:var(--muted);font-size:14px}
+#fromCustomBox[hidden]{display:none}
 .actions{display:flex;gap:10px;flex-wrap:wrap}
 .btn{font:inherit;font-size:14px;padding:9px 16px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--fg);cursor:pointer}
 .btn.primary{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
@@ -116,8 +121,17 @@ a.btn{text-decoration:none;display:inline-block}
       </div>
       <div class="row2">
         <div class="field"><label for="toCustom" class="hint">自訂稱呼</label><input id="toCustom" placeholder="例如：舅舅舅媽" disabled></div>
-        <div class="field"><label for="fromIn" class="hint">署名（可留空）</label><input id="fromIn" value="Ted" placeholder="例如：小明敬上"></div>
+        <div class="field"><label for="fromSel" class="hint">署名</label><select id="fromSel"></select></div>
       </div>
+      <div class="field" id="fromCustomBox" hidden><label for="fromIn" class="hint">自己輸入署名（可留空）</label><input id="fromIn" placeholder="例如：小明敬上"></div>
+      <details class="menus" id="menuBox">
+        <summary>設定選單：在長輩的手機上先填好名字</summary>
+        <p class="hint">長輩不用打字：拿長輩的手機打開這個網站（或桌面上的賀卡坊），在這裡填好名字按「儲存選單」，這支手機以後就只要用點的選。每行一個，或用「、」隔開。</p>
+        <div class="field"><label for="menuFrom" class="hint">署名選單</label><textarea id="menuFrom" rows="3" placeholder="例如：&#10;小明&#10;小華全家"></textarea></div>
+        <div class="field"><label for="menuTo" class="hint">「送給」另外加的稱呼</label><textarea id="menuTo" rows="2" placeholder="例如：&#10;老同事&#10;各位鄰居"></textarea></div>
+        <div class="actions"><button class="btn primary" id="menuSave" type="button">儲存選單</button></div>
+        <p class="hint" id="menuNote"></p>
+      </details>
     </div>
 
     <div class="group">

@@ -12,6 +12,7 @@ function wrapLines(x,text,maxW,indentPx){
   return lines;
 }
 function recipient(){const v=$("toSel").value;return v==="__custom"?$("toCustom").value.trim():v}
+function sender(){const v=$("fromSel").value;return v==="__custom"?$("fromIn").value.trim():v}
 function curDesign(f){return f.designs[tplIdx%f.designs.length]}
 function curPhrase(){const d=curDesign(cur);return phraseOf(Object.assign({},cur,d.phrase?{phrase:d.phrase}:{}))}
 function drawCard(c){
@@ -44,7 +45,7 @@ function drawCard(c){
   x.strokeStyle=f.gold;x.globalAlpha=.6;x.lineWidth=1.5;x.strokeRect(80,975,W-160,350);x.globalAlpha=1;
   x.textAlign="left";x.textBaseline="alphabetic";x.fillStyle=INK;
   const L=120,maxW=W-2*L,lh=62;let y=1045;
-  const to=recipient(),from=$("fromIn").value.trim(),msg=msgOf(f);
+  const to=recipient(),from=sender(),msg=msgOf(f);
   if(to){x.font=`600 34px ${BODY}`;x.fillText(`親愛的${to}：`,L,y);y+=lh}
   x.font=`34px ${BODY}`;
   for(const ln of wrapLines(x,msg,maxW,68)){x.fillText(ln.t,ln.first?L+68:L,y);y+=lh}
@@ -80,7 +81,7 @@ function render(anim){
 }
 function select(id){cur=FESTS.find(f=>f.id===id);msgIdx=0;tplIdx=0;render(true)}
 function cardText(){
-  const to=recipient(),from=$("fromIn").value.trim(),lines=[];
+  const to=recipient(),from=sender(),lines=[];
   if(to)lines.push(`親愛的${to}：`);lines.push(`【${cur.name}・${curPhrase()}】`);lines.push(msgOf(cur));if(from)lines.push(from);
   return lines.join("\n");
 }
@@ -88,6 +89,36 @@ function cardText(){
 $("toSel").addEventListener("change",()=>{const cu=$("toSel").value==="__custom";$("toCustom").disabled=!cu;if(cu)$("toCustom").focus();render(false)});
 $("toCustom").addEventListener("input",()=>render(false));
 $("fromIn").addEventListener("input",()=>render(false));
+
+/* ---------- custom name menus (so elders only tap, never type) ---------- */
+// Set up once on the elder's own phone; the lists are kept in this browser (localStorage).
+const SITE_URL="https://greeting-card-generator.hoya-chen.workers.dev/";
+const BUILTIN_TO=[...$("toSel").options].map(o=>o.value).filter(v=>v!=="__custom");
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const splitNames=t=>[...new Set((t||"").split(/[\n,，、;；]+/).map(s=>s.trim()).filter(Boolean))].slice(0,30);
+let menus={from:["Ted"],to:[]};
+try{const m=JSON.parse(store.get("menus")||"null");if(m&&Array.isArray(m.from))menus={from:m.from,to:Array.isArray(m.to)?m.to:[]}}catch(e){}
+function fillSelect(sel,items,keep){
+  sel.textContent="";
+  for(const v of items){const o=document.createElement("option");o.value=o.textContent=v;sel.append(o)}
+  const c=document.createElement("option");c.value="__custom";c.textContent="自己輸入…";sel.append(c);
+  sel.value=items.includes(keep)?keep:(items[0]??"__custom");
+}
+function applyMenus(){
+  const pick=(()=>{try{return JSON.parse(store.get("pick")||"{}")}catch(e){return {}}})();
+  fillSelect($("toSel"),[...menus.to,...BUILTIN_TO.filter(v=>!menus.to.includes(v))],pick.to??$("toSel").value);
+  fillSelect($("fromSel"),menus.from,pick.from);
+  $("toCustom").disabled=$("toSel").value!=="__custom";
+  $("fromCustomBox").hidden=$("fromSel").value!=="__custom";
+  $("menuFrom").value=menus.from.join("\n");$("menuTo").value=menus.to.join("\n");
+}
+const rememberPick=()=>store.set("pick",JSON.stringify({to:$("toSel").value,from:$("fromSel").value}));
+$("toSel").addEventListener("change",rememberPick);
+$("fromSel").addEventListener("change",()=>{const cu=$("fromSel").value==="__custom";$("fromCustomBox").hidden=!cu;if(cu)$("fromIn").focus();rememberPick();render(false)});
+function readMenus(){return {from:splitNames($("menuFrom").value),to:splitNames($("menuTo").value)}}
+$("menuSave").addEventListener("click",()=>{menus=readMenus();store.set("menus",JSON.stringify(menus));applyMenus();render(false);
+  $("menuNote").textContent="已儲存，這支手機下次打開也會記得。";$("menuBox").open=false});
+applyMenus();
 $("shuffle").addEventListener("click",()=>{msgIdx++;render(false)});
 $("swapArt").addEventListener("click",()=>{tplIdx++;render(true)});
 $("copy").addEventListener("click",()=>{
@@ -176,7 +207,6 @@ if(!window.claude){ // the artifact frame blocks share sheets and outside links,
   if(inWeChat)$("shareNote").textContent="你正在微信裡，按「傳到微信」後長按圖片就能發送給朋友。";
 }
 // In the Claude artifact, point people to the real website (install icon, sharing and offline only work there).
-const SITE_URL="https://greeting-card-generator.hoya-chen.workers.dev/";
 if(window.claude){
   $("siteBar").hidden=false;
   $("siteCopy").addEventListener("click",()=>{const b=$("siteCopy");
