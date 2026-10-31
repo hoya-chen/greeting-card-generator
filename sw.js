@@ -1,6 +1,6 @@
 // Offline support for 年節賀卡坊. Bump VERSION whenever index.html or the icons change
 // so phones that installed the app pick up the new version.
-const VERSION = 'v11';
+const VERSION = 'v12';
 const APP = 'app-' + VERSION, FONTS = 'fonts', PHOTOS = 'bg-photos';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png',
   'icons/maskable-512.png', 'icons/apple-touch-icon.png', 'icons/favicon-32.png'];

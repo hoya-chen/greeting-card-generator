@@ -1,6 +1,6 @@
-# 風景照來源與授權
+# 照片來源與授權
 
-賀卡的風景照都是 CC0 或公有領域（Public Domain）的照片，可自由使用、商用，不需要標示作者；
+賀卡的風景照與花草照都是 CC0 或公有領域（Public Domain）的照片，可自由使用、商用，不需要標示作者；
 這裡仍列出來源以示感謝。照片由 `tools/fetch_bg.py` 依 `bg/sources.json` 下載並裁切成賀卡尺寸。
 
 ## 春節
@@ -212,3 +212,23 @@
 | `thanksgiving/08.webp` | [神奈川県　丹沢湖畔の紅葉　/　Autumn Leaves by Lake Tanzawa, Kanagawa Prefecture](https://wordpress.org/photos/photo/1456587e01/) | 渡邉厚夫(たいちょ渡邉) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `thanksgiving/09.webp` | [神奈川県　丹沢湖畔の紅葉　/　Autumn Leaves by Lake Tanzawa, Kanagawa Prefecture](https://wordpress.org/photos/photo/9736587df7/) | 渡邉厚夫(たいちょ渡邉) | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
 | `thanksgiving/10.webp` | [Autumn on the Ausable River near Lake Placid, New York, Adirondack Mou](https://wordpress.org/photos/photo/927640ba60/) | Michelle Frechette | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+
+## 花草（所有節日共用）
+
+| 檔案 | 照片 | 作者 | 授權 |
+|---|---|---|---|
+| `flowers/01.webp` | [Pink Peony Flower](https://wordpress.org/photos/photo/130629175a/) | david111780 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/02.webp` | [A large, double-petaled pink lotus flower is blooming in a shallow, sunlit pond,](https://wordpress.org/photos/photo/2796ac214f/) | Swetha B Chandran | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/03.webp` | [Purple Phalaenopsis orchid flowers with patterned petals and several unopened bu](https://wordpress.org/photos/photo/9356ae2a31/) | andres2003 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/04.webp` | [A close-up shot of bright magenta-pink chrysanthemum flowers with vibrant yellow](https://wordpress.org/photos/photo/8576ac15f8/) | Richa Shrivastava | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/05.webp` | [Close-up of cherry blossoms with pink petals on a branch, set against a clear bl](https://wordpress.org/photos/photo/1026a26df5/) | shirishpoudel07 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/06.webp` | [Two bright yellow sunflowers with dark centers among green stems, set against a ](https://wordpress.org/photos/photo/8906ac475d/) | Nicole Steysi Quirós Ramirez | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/07.webp` | [Camellia japonica Black Magic](https://wordpress.org/photos/photo/40566121d9/) | ZNMAC | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/08.webp` | [Cluster of light blue hydrangea flowers surrounded by large green leaves](https://wordpress.org/photos/photo/3216adedad/) | andres2003 | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/09.webp` | [Bright pink azalea flowers fill the frame, blooming in dense clusters with soft,](https://wordpress.org/photos/photo/8056a657fe/) | yessicamg | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/10.webp` | [A cluster of bright yellow tulips with vivid red streaks stands tall among green](https://wordpress.org/photos/photo/6676a586c5/) | yessicamg | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/11.webp` | [A single white/yellow magnolia blossom on a branch](https://wordpress.org/photos/photo/760643f05e/) | Michelle Frechette | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/12.webp` | [A cluster of purple wisteria flowers hanging from a vine, with green leaves inte](https://wordpress.org/photos/photo/854628df52/) | Magali | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/13.webp` | [Close-up of a vibrant magenta-pink cosmos flower with broad petals and a bright ](https://wordpress.org/photos/photo/3276adb801/) | Md. Meahadi Hasan | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/14.webp` | [A pink rose with curled petals and green leaves, supported by a wooden stick in ](https://wordpress.org/photos/photo/7146adf538/) | mriduljp | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |
+| `flowers/15.webp` | [A bright yellow wedelia daisy blooming alone among rich green foliage in an outd](https://wordpress.org/photos/photo/6016ace009/) | Faisal Ahammad | [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/) |

@@ -64,8 +64,8 @@ header.top h1{font-family:var(--display);font-weight:700;font-size:30px;margin:0
 .seg button:first-child{border-left:0}
 .seg button small{font-size:16px;font-weight:400;opacity:.8;margin-left:4px}
 .seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg)}
-/* 中國／西洋 and 卡通／風景／傳統 share one compact row above the dropdowns */
-.segrow{display:grid;grid-template-columns:2fr 3fr;gap:10px}
+/* 中國／西洋 and 卡通／風景／花草／傳統 share one compact row above the dropdowns */
+.segrow{display:grid;grid-template-columns:1fr 2fr;gap:10px}
 .segrow .seg button{font-size:20px;min-height:50px;padding:4px 2px}
 @media (max-width:380px){.pick select{font-size:18px;padding-left:10px;padding-right:24px;background-position:right 13px top 50%,right 7px top 50%}}
 .field{display:grid;gap:6px}
@@ -149,6 +149,7 @@ a.btn{text-decoration:none;display:inline-block}
       <div class="seg" id="styleSeg" role="group" aria-label="圖案風格">
         <button type="button" data-style="cartoon">卡通</button>
         <button type="button" data-style="scenery">風景</button>
+        <button type="button" data-style="flower">花草</button>
         <button type="button" data-style="traditional">傳統</button>
       </div>
     </div>
